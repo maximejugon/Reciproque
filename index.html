@@ -176,11 +176,16 @@
   .si-role { margin-top: 6px; font-size: 13px; color: var(--muted-dark); }
   .si-role b { color: var(--petrol-700); }
   .si-out {
-    margin-top: 24px; padding: 12px; width: 100%; border-radius: 12px; cursor: pointer;
+    margin-top: 10px; padding: 12px; width: 100%; border-radius: 12px; cursor: pointer;
     border: 1.5px solid var(--line-light); background: #fff; color: var(--text-dark);
     font-family: var(--body); font-size: 14px; font-weight: 500;
   }
   .si-out:hover { border-color: var(--muted-dark); }
+  .si-actions { margin-top: 22px; display: flex; flex-direction: column; gap: 8px; }
+  .si-link { display: block; text-align: center; padding: 12px; border-radius: 12px; text-decoration: none; font-family: var(--body); font-size: 14px; font-weight: 600; border: 1.5px solid var(--line-light); color: var(--text-dark); background: #fff; }
+  .si-link:hover { border-color: var(--muted-dark); }
+  .si-link.primary { background: var(--petrol-700); color: var(--paper); border-color: var(--petrol-700); }
+  .si-link.primary:hover { background: var(--petrol-500); border-color: var(--petrol-500); }
   :focus-visible { outline: 2px solid var(--honey); outline-offset: 2px; border-radius: 6px; }
   @media (max-width: 900px) {
     .stage { grid-template-columns: 1fr; }
@@ -293,6 +298,10 @@
         <div class="si-avatar"></div>
         <div class="si-email" id="si-email">—</div>
         <div class="si-role">Profil : <b id="si-role">—</b></div>
+        <div class="si-actions">
+          <a class="si-link primary" href="recherche.html">Rechercher des profils</a>
+          <a class="si-link" href="mon-profil.html">Mon profil</a>
+        </div>
         <button class="si-out" id="btn-signout">Se déconnecter</button>
       </div>
     </section>

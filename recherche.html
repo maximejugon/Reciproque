@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Réciproque — Rechercher un profil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink:#0A1B19; --petrol-900:#0C2E2A; --petrol-700:#114F47; --petrol-500:#1A6B61;
+    --honey:#E6A24C; --honey-soft:#F2C98A; --paper:#F4EEE3; --card:#FFFFFF;
+    --paper-dim:#ECE5D8; --text-dark:#1B2421; --muted-dark:#5E6B66;
+    --on-dark:#EDEAE2; --on-dark-dim:rgba(237,234,226,.62); --line:#E4DCCE;
+    --display:"Bricolage Grotesque",system-ui,sans-serif; --body:"Inter",system-ui,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:var(--body);background:var(--paper);color:var(--text-dark);-webkit-font-smoothing:antialiased}
+
+  .topbar{background:var(--petrol-900);color:var(--on-dark);padding:14px clamp(16px,4vw,40px);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20}
+  .brand{display:flex;align-items:center;gap:9px;font-family:var(--display);font-weight:700;font-size:17px}
+  .brand .mark{width:26px;height:26px;display:grid;place-items:center;border-radius:8px;background:var(--honey);color:var(--petrol-900);font-size:15px}
+  .brand{text-decoration:none;color:inherit;cursor:pointer}
+  .mainnav{display:flex;gap:4px;align-items:center}
+  .mainnav a{color:var(--on-dark-dim);text-decoration:none;font-size:13.5px;font-weight:500;padding:7px 11px;border-radius:9px;transition:background .15s,color .15s}
+  .mainnav a:hover{color:var(--on-dark);background:rgba(237,234,226,.08)}
+  .mainnav a.active{color:var(--petrol-900);background:var(--honey);font-weight:600}
+
+  /* hero / recherche */
+  .hero{background:radial-gradient(120% 120% at 80% -10%,var(--petrol-700) 0%,var(--petrol-900) 60%);color:var(--on-dark);padding:clamp(32px,6vw,64px) clamp(16px,4vw,40px)}
+  .hero-in{max-width:880px;margin:0 auto}
+  .hero h1{font-family:var(--display);font-weight:700;font-size:clamp(26px,3.6vw,40px);letter-spacing:-0.025em;line-height:1.05}
+  .hero h1 em{font-style:normal;color:var(--honey)}
+  .hero p{margin-top:12px;color:var(--on-dark-dim);font-size:15px;max-width:520px}
+
+  .searchbar{margin-top:26px;display:flex;gap:10px;background:var(--card);border-radius:14px;padding:8px;box-shadow:0 10px 30px rgba(10,27,25,.25)}
+  .searchbar input{flex:1;border:none;background:transparent;padding:12px 14px;font-family:var(--body);font-size:15px;color:var(--text-dark)}
+  .searchbar input:focus{outline:none}
+  .searchbar .go{border:none;background:var(--petrol-700);color:var(--paper);font-family:var(--body);font-weight:600;font-size:14px;padding:0 22px;border-radius:10px;cursor:pointer}
+  .searchbar .go:hover{background:var(--petrol-500)}
+
+  /* filtres */
+  .filters{max-width:880px;margin:22px auto 0;padding:0 clamp(16px,4vw,40px);display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+  .seg{display:inline-flex;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px}
+  .seg button{border:none;background:transparent;color:var(--muted-dark);cursor:pointer;font-family:var(--body);font-size:13px;font-weight:500;padding:7px 15px;border-radius:999px;transition:background .15s,color .15s}
+  .seg button.active{background:var(--petrol-700);color:var(--paper);font-weight:600}
+  .filter-field{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted-dark)}
+  .filter-field select{font-family:var(--body);font-size:13px;color:var(--text-dark);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 11px;cursor:pointer}
+
+  /* résultats */
+  .results-wrap{max-width:880px;margin:0 auto;padding:24px clamp(16px,4vw,40px) 80px}
+  .results-count{font-size:13px;color:var(--muted-dark);margin-bottom:16px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .pcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:13px;transition:border-color .15s,transform .08s;cursor:pointer}
+  .pcard:hover{border-color:var(--petrol-500);transform:translateY(-2px)}
+  .pcard-top{display:flex;align-items:center;gap:12px}
+  .pavatar{width:48px;height:48px;border-radius:50%;flex:none;background:linear-gradient(135deg,var(--petrol-500),var(--honey))}
+  .pname{font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:-0.01em}
+  .pmeta{font-size:12.5px;color:var(--muted-dark);margin-top:2px}
+  .pbadge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;background:rgba(26,107,97,.10);color:var(--petrol-700);margin-top:4px}
+  .pscore{display:flex;align-items:center;gap:9px;padding-top:12px;border-top:1px solid var(--line)}
+  .pscore-num{font-family:var(--display);font-weight:800;font-size:22px;color:var(--petrol-700);letter-spacing:-0.02em}
+  .pstars{color:var(--honey);font-size:13px;letter-spacing:1px}
+  .pcount{font-size:12px;color:var(--muted-dark)}
+  .pseen{font-size:11px;color:var(--muted-dark);margin-left:auto;display:flex;align-items:center;gap:5px}
+  .pseen .arrow{color:var(--honey)}
+  .empty{text-align:center;color:var(--muted-dark);padding:48px 0;font-size:14px}
+
+  :focus-visible{outline:2px solid var(--honey);outline-offset:2px;border-radius:6px}
+  @media(max-width:720px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html"><span class="mark">↺</span> Réciproque</a>
+    <nav class="mainnav">
+      <a href="recherche.html" class="active">Rechercher</a>
+      <a href="mon-profil.html">Mon profil</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="hero-in">
+      <h1>Avant de signer,<br/><em>regardez les deux côtés.</em></h1>
+      <p>Cherchez un propriétaire ou un locataire par son nom ou sa ville, et consultez sa réputation.</p>
+      <div class="searchbar">
+        <input id="q" type="text" placeholder="Nom, ville…  (essayez « Barcelone » ou « Marc »)" autocomplete="off" />
+        <button class="go" id="go">Rechercher</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="filters">
+    <div class="seg" role="group" aria-label="Filtrer par rôle">
+      <button data-role="tous" class="active">Tous</button>
+      <button data-role="proprietaire">Propriétaires</button>
+      <button data-role="locataire">Locataires</button>
+    </div>
+    <div class="filter-field">
+      Note minimale
+      <select id="minrating">
+        <option value="0">toutes</option>
+        <option value="4">4 ★ et +</option>
+        <option value="4.5">4,5 ★ et +</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="results-wrap">
+    <div class="results-count" id="count"></div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <script>
+    /* Données de démo — forme identique à ce que renverra Supabase
+       (table profiles jointe à la vue v_profil_notes). */
+    const PROFILS = [
+      { nom:"Marc Delmas",    role:"proprietaire", ville:"Gràcia, Barcelone",   note:4.8, avis:23 },
+      { nom:"Léa Martin",     role:"locataire",    ville:"Barcelone",           note:4.9, avis:7  },
+      { nom:"Sofia Navarro",  role:"locataire",    ville:"Eixample, Barcelone", note:4.6, avis:5  },
+      { nom:"Anna Puig",      role:"proprietaire", ville:"Poblenou, Barcelone", note:4.7, avis:14 },
+      { nom:"Tom Riera",      role:"locataire",    ville:"Sants, Barcelone",    note:4.2, avis:4  },
+      { nom:"Jordi Costa",    role:"proprietaire", ville:"Sarrià, Barcelone",   note:3.9, avis:9  },
+      { nom:"Clara Vidal",    role:"locataire",    ville:"Gràcia, Barcelone",   note:5.0, avis:6  },
+      { nom:"Pau Serra",      role:"proprietaire", ville:"El Born, Barcelone",  note:4.5, avis:18 },
+    ];
+
+    const roleLabel = { proprietaire:"🏠 Propriétaire", locataire:"🔑 Locataire" };
+    const seenLabel = { proprietaire:"vu par ses locataires", locataire:"vu par ses propriétaires" };
+    const fmt = n => n.toFixed(1).replace('.', ',');
+    const stars = n => '★'.repeat(Math.round(n)) + '☆'.repeat(5 - Math.round(n));
+
+    let roleFilter = 'tous';
+
+    function render() {
+      const q = document.getElementById('q').value.trim().toLowerCase();
+      const minR = parseFloat(document.getElementById('minrating').value);
+      const list = PROFILS.filter(p =>
+        (roleFilter === 'tous' || p.role === roleFilter) &&
+        p.note >= minR &&
+        (q === '' || p.nom.toLowerCase().includes(q) || p.ville.toLowerCase().includes(q))
+      ).sort((a,b) => b.note - a.note);
+
+      document.getElementById('count').textContent =
+        list.length ? `${list.length} profil${list.length>1?'s':''} trouvé${list.length>1?'s':''}` : '';
+
+      const grid = document.getElementById('grid');
+      if (!list.length) {
+        grid.innerHTML = '<div class="empty">Aucun profil ne correspond. Essayez d\'élargir votre recherche.</div>';
+        return;
+      }
+      grid.innerHTML = list.map(p => `
+        <article class="pcard" tabindex="0">
+          <div class="pcard-top">
+            <div class="pavatar"></div>
+            <div>
+              <div class="pname">${p.nom}</div>
+              <div class="pmeta">📍 ${p.ville}</div>
+              <span class="pbadge">${roleLabel[p.role]}</span>
+            </div>
+          </div>
+          <div class="pscore">
+            <span class="pscore-num">${fmt(p.note)}</span>
+            <div>
+              <div class="pstars">${stars(p.note)}</div>
+              <div class="pcount">${p.avis} avis</div>
+            </div>
+            <span class="pseen"><span class="arrow">⇄</span> ${seenLabel[p.role]}</span>
+          </div>
+        </article>`).join('');
+    }
+
+    document.querySelectorAll('.seg button').forEach(b =>
+      b.addEventListener('click', () => {
+        document.querySelectorAll('.seg button').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        roleFilter = b.dataset.role;
+        render();
+      })
+    );
+    document.getElementById('q').addEventListener('input', render);
+    document.getElementById('go').addEventListener('click', render);
+    document.getElementById('minrating').addEventListener('change', render);
+    render();
+  </script>
+</body>
+</html>

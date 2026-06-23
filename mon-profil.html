@@ -22,8 +22,11 @@
   .topbar{background:var(--petrol-900);color:var(--on-dark);padding:14px clamp(16px,4vw,40px);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20}
   .brand{display:flex;align-items:center;gap:9px;font-family:var(--display);font-weight:700;font-size:17px}
   .brand .mark{width:26px;height:26px;display:grid;place-items:center;border-radius:8px;background:var(--honey);color:var(--petrol-900);font-size:15px}
-  .nav-link{font-size:13px;color:var(--on-dark-dim);text-decoration:none}
-  .nav-link:hover{color:var(--on-dark)}
+  .brand{text-decoration:none;color:inherit;cursor:pointer}
+  .mainnav{display:flex;gap:4px;align-items:center}
+  .mainnav a{color:var(--on-dark-dim);text-decoration:none;font-size:13.5px;font-weight:500;padding:7px 11px;border-radius:9px;transition:background .15s,color .15s}
+  .mainnav a:hover{color:var(--on-dark);background:rgba(237,234,226,.08)}
+  .mainnav a.active{color:var(--petrol-900);background:var(--honey);font-weight:600}
 
   .wrap{max-width:520px;margin:0 auto;padding:clamp(20px,4vw,40px) clamp(16px,4vw,24px) 80px}
   .panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px}
@@ -68,8 +71,11 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="brand"><span class="mark">↺</span> Réciproque</div>
-    <a class="nav-link" href="index.html">Accueil</a>
+    <a class="brand" href="index.html"><span class="mark">↺</span> Réciproque</a>
+    <nav class="mainnav">
+      <a href="recherche.html">Rechercher</a>
+      <a href="mon-profil.html" class="active">Mon profil</a>
+    </nav>
   </header>
 
   <main class="wrap">

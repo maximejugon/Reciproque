@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Réciproque — Profils</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #0A1B19;
+    --petrol-900: #0C2E2A;
+    --petrol-700: #114F47;
+    --petrol-500: #1A6B61;
+    --honey: #E6A24C;
+    --honey-soft: #F2C98A;
+    --paper: #F4EEE3;
+    --card: #FFFFFF;
+    --paper-dim: #ECE5D8;
+    --text-dark: #1B2421;
+    --muted-dark: #5E6B66;
+    --on-dark: #EDEAE2;
+    --on-dark-dim: rgba(237, 234, 226, 0.62);
+    --line: #E4DCCE;
+    --line-soft: #EFE9DD;
+    --display: "Bricolage Grotesque", system-ui, sans-serif;
+    --body: "Inter", system-ui, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: var(--body);
+    background: var(--paper);
+    color: var(--text-dark);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- top bar (dark, lien avec la landing) ---------- */
+  .topbar {
+    background: var(--petrol-900);
+    color: var(--on-dark);
+    padding: 14px clamp(16px, 4vw, 40px);
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 20;
+  }
+  .brand { display: flex; align-items: center; gap: 9px; font-family: var(--display); font-weight: 700; font-size: 17px; text-decoration: none; color: inherit; }
+  .brand .mark { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 8px; background: var(--honey); color: var(--petrol-900); font-size: 15px; }
+  .tb-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .mainnav { display: flex; gap: 4px; align-items: center; }
+  .mainnav a { color: var(--on-dark-dim); text-decoration: none; font-size: 13.5px; font-weight: 500; padding: 7px 11px; border-radius: 9px; transition: background .15s, color .15s; }
+  .mainnav a:hover { color: var(--on-dark); background: rgba(237,234,226,.08); }
+
+  /* preview switcher */
+  .switcher { display: flex; align-items: center; gap: 8px; }
+  .switcher .lbl { font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--on-dark-dim); margin-right: 4px; }
+  .seg { display: inline-flex; background: rgba(237,234,226,.08); border: 1px solid rgba(237,234,226,.14); border-radius: 999px; padding: 3px; }
+  .seg button {
+    border: none; background: transparent; color: var(--on-dark-dim); cursor: pointer;
+    font-family: var(--body); font-size: 12.5px; font-weight: 500; padding: 6px 13px; border-radius: 999px;
+    transition: background .15s, color .15s;
+  }
+  .seg button.active { background: var(--honey); color: var(--petrol-900); font-weight: 600; }
+
+  /* ---------- layout ---------- */
+  .wrap {
+    max-width: 1080px; margin: 0 auto; padding: clamp(20px, 4vw, 40px) clamp(16px, 4vw, 40px) 80px;
+    display: grid; grid-template-columns: 340px 1fr; gap: 28px; align-items: start;
+  }
+  .col-side { position: sticky; top: 86px; display: flex; flex-direction: column; gap: 16px; }
+
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 22px; }
+
+  /* ---------- identity ---------- */
+  .id-top { display: flex; align-items: center; gap: 14px; }
+  .id-avatar { width: 60px; height: 60px; border-radius: 50%; flex: none; background: linear-gradient(135deg, var(--petrol-500), var(--honey)); }
+  .id-name { font-family: var(--display); font-weight: 700; font-size: 21px; letter-spacing: -0.02em; }
+  .id-badge {
+    display: inline-flex; align-items: center; gap: 5px; margin-top: 5px;
+    font-size: 11.5px; font-weight: 600; padding: 3px 9px; border-radius: 999px;
+    background: rgba(26,107,97,.10); color: var(--petrol-700);
+  }
+  .id-meta { margin-top: 16px; font-size: 13px; color: var(--muted-dark); line-height: 1.7; }
+  .id-meta b { color: var(--text-dark); font-weight: 600; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .chip { font-size: 11.5px; color: var(--petrol-700); background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 4px 9px; display: inline-flex; align-items: center; gap: 5px; }
+
+  /* ---------- score ---------- */
+  .score-seen { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted-dark); display: flex; align-items: center; gap: 7px; }
+  .score-seen .arrow { color: var(--honey); }
+  .score-main { display: flex; align-items: baseline; gap: 10px; margin: 12px 0 4px; }
+  .score-num { font-family: var(--display); font-weight: 800; font-size: 46px; line-height: 1; color: var(--petrol-700); letter-spacing: -0.03em; }
+  .stars { color: var(--honey); font-size: 15px; letter-spacing: 2px; }
+  .score-count { font-size: 13px; color: var(--muted-dark); }
+
+  .criteria { margin-top: 20px; display: flex; flex-direction: column; gap: 13px; }
+  .crit { }
+  .crit-head { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+  .crit-head .v { font-weight: 600; font-family: var(--display); color: var(--petrol-700); }
+  .crit-track { height: 6px; background: var(--paper-dim); border-radius: 999px; overflow: hidden; }
+  .crit-fill { height: 100%; background: linear-gradient(90deg, var(--honey), var(--honey-soft)); border-radius: 999px; }
+
+  /* ---------- main column ---------- */
+  .col-main { display: flex; flex-direction: column; gap: 22px; }
+  .section-h { font-family: var(--display); font-weight: 700; font-size: 18px; letter-spacing: -0.01em; margin-bottom: 14px; display: flex; align-items: baseline; gap: 9px; }
+  .section-h .count { font-size: 13px; color: var(--muted-dark); font-weight: 500; font-family: var(--body); }
+
+  /* collection (logements / baux) */
+  .coll { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .coll-item { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 15px; }
+  .coll-thumb { height: 84px; border-radius: 10px; margin-bottom: 11px; background: linear-gradient(135deg, var(--paper-dim), var(--line)); position: relative; }
+  .coll-title { font-family: var(--display); font-weight: 600; font-size: 14.5px; }
+  .coll-sub { font-size: 12.5px; color: var(--muted-dark); margin-top: 3px; }
+  .coll-meta { font-size: 12px; color: var(--petrol-700); margin-top: 9px; display: inline-flex; align-items: center; gap: 5px; }
+
+  /* reviews */
+  .reviews { display: flex; flex-direction: column; gap: 14px; }
+  .review { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px; }
+  .rv-head { display: flex; align-items: center; gap: 11px; }
+  .rv-avatar { width: 38px; height: 38px; border-radius: 50%; flex: none; background: linear-gradient(135deg, var(--petrol-500), var(--honey)); }
+  .rv-who { flex: 1; }
+  .rv-name { font-family: var(--display); font-weight: 600; font-size: 14.5px; }
+  .rv-sub { font-size: 12px; color: var(--muted-dark); }
+  .rv-stars { color: var(--honey); font-size: 13px; letter-spacing: 1px; }
+  .rv-text { margin-top: 11px; font-size: 14px; line-height: 1.55; color: #2A332F; }
+  .rv-actions { margin-top: 12px; }
+  .rv-reply {
+    background: none; border: 1px solid var(--line); color: var(--petrol-700); cursor: pointer;
+    font-family: var(--body); font-size: 12.5px; font-weight: 500; padding: 7px 13px; border-radius: 9px;
+    transition: border-color .15s, background .15s;
+  }
+  .rv-reply:hover { border-color: var(--petrol-500); background: var(--paper); }
+  .rv-response { margin-top: 13px; padding: 13px 14px; background: var(--paper); border-radius: 11px; border-left: 3px solid var(--honey); }
+  .rv-response .r-label { font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted-dark); font-weight: 600; }
+  .rv-response .r-text { font-size: 13.5px; line-height: 1.5; margin-top: 5px; color: #2A332F; }
+
+  .note-rgpd { font-size: 12px; color: var(--muted-dark); background: var(--card); border: 1px dashed var(--line); border-radius: 12px; padding: 13px 15px; line-height: 1.5; }
+  .note-rgpd b { color: var(--petrol-700); }
+
+  :focus-visible { outline: 2px solid var(--honey); outline-offset: 2px; border-radius: 6px; }
+
+  @media (max-width: 880px) {
+    .wrap { grid-template-columns: 1fr; }
+    .col-side { position: static; }
+    .coll { grid-template-columns: 1fr; }
+    .switcher .lbl { display: none; }
+  }
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="tb-left">
+      <a class="brand" href="index.html"><span class="mark">↺</span> Réciproque</a>
+      <nav class="mainnav">
+        <a href="recherche.html">Rechercher</a>
+        <a href="mon-profil.html">Mon profil</a>
+      </nav>
+    </div>
+    <div class="switcher">
+      <span class="lbl">Aperçu</span>
+      <div class="seg" role="group" aria-label="Choisir le profil à prévisualiser">
+        <button id="seg-pro" class="active">Propriétaire</button>
+        <button id="seg-loc">Locataire</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <aside class="col-side">
+      <div class="panel" id="identity"></div>
+      <div class="panel" id="score"></div>
+    </aside>
+    <div class="col-main" id="main"></div>
+  </main>
+
+  <script>
+    /* ============================================================
+       Données de démonstration.
+       Chaque objet correspond à ce que renverra plus tard la base
+       de données (tables profiles + avis). Le rendu ci-dessous
+       montre comment ces données alimentent l'interface.
+       ============================================================ */
+    const PROFILES = {
+      proprietaire: {
+        name: "Marc Delmas",
+        role: "Propriétaire",
+        roleIcon: "🏠",
+        location: "Gràcia, Barcelone",
+        memberSince: "2023",
+        seenBy: "Vu par ses locataires",
+        verified: ["Identité vérifiée", "E-mail vérifié", "Téléphone vérifié"],
+        score: 4.8,
+        reviewCount: 23,
+        criteria: [
+          { label: "État du logement", value: 4.9 },
+          { label: "Honnêteté de l'annonce", value: 4.7 },
+          { label: "Réactivité", value: 4.8 },
+          { label: "Respect du contrat", value: 5.0 },
+          { label: "Rapport qualité / prix", value: 4.5 },
+        ],
+        collection: {
+          title: "Logements", icon: "🏠",
+          items: [
+            { title: "Appartement 2 ch. — Gràcia", sub: "65 m² · 2e étage", meta: "Loué · 12 avis" },
+            { title: "Studio — Eixample", sub: "32 m² · lumineux", meta: "Disponible · 8 avis" },
+          ],
+        },
+        reviews: [
+          {
+            author: "Léa Martin", authorRole: "Locataire · bail de 18 mois", date: "Mars 2026", rating: 5,
+            text: "Propriétaire réglo et disponible. Le logement correspondait exactement à l'annonce, et la moindre réparation était traitée en 48 h. Caution rendue intégralement et sans délai.",
+            response: null,
+          },
+          {
+            author: "Tom Riera", authorRole: "Locataire · bail de 9 mois", date: "Janvier 2026", rating: 4,
+            text: "Bon contact dans l'ensemble. Une fuite a mis un peu de temps à être prise en charge, mais le problème a fini par être réglé correctement.",
+            response: "Merci Tom. La pièce était en rupture chez le fournisseur — j'ai depuis changé de plombier pour éviter ces délais. Au plaisir.",
+          },
+          {
+            author: "Sofia Navarro", authorRole: "Locataire · bail de 24 mois", date: "Octobre 2025", rating: 5,
+            text: "Deux ans sans le moindre souci. Communication claire, augmentations conformes au contrat. Je recommande sans hésiter.",
+            response: null,
+          },
+        ],
+      },
+      locataire: {
+        name: "Léa Martin",
+        role: "Locataire",
+        roleIcon: "🔑",
+        location: "Barcelone",
+        memberSince: "2022",
+        seenBy: "Vu par ses propriétaires",
+        verified: ["Identité vérifiée", "E-mail vérifié", "Justificatifs vérifiés"],
+        score: 4.9,
+        reviewCount: 7,
+        criteria: [
+          { label: "Paiement à temps", value: 5.0 },
+          { label: "Entretien du logement", value: 4.8 },
+          { label: "Communication", value: 4.9 },
+          { label: "Respect du voisinage", value: 5.0 },
+          { label: "Respect du contrat", value: 4.7 },
+        ],
+        collection: {
+          title: "Historique de baux", icon: "🔑",
+          items: [
+            { title: "Appartement à Gràcia", sub: "18 mois · 2024–2026", meta: "Clôturé · noté 5/5" },
+            { title: "Studio à Poblenou", sub: "12 mois · 2023–2024", meta: "Clôturé · noté 5/5" },
+          ],
+        },
+        reviews: [
+          {
+            author: "Marc Delmas", authorRole: "Propriétaire · Gràcia", date: "Mars 2026", rating: 5,
+            text: "Locataire idéale. Loyer toujours à l'heure, logement rendu impeccable, aucune plainte du voisinage en 18 mois. Je la reprends quand elle veut.",
+            response: null,
+          },
+          {
+            author: "Anna Puig", authorRole: "Propriétaire · Poblenou", date: "Décembre 2024", rating: 5,
+            text: "Communication exemplaire et grand soin du logement. Un petit retard de paiement signalé à l'avance, réglé dans la foulée. Rien à redire.",
+            response: "Merci Anna ! C'était le mois de mon changement d'employeur, j'ai préféré prévenir. Ravie que tout se soit bien passé.",
+          },
+        ],
+      },
+    };
+
+    /* ---------- helpers de rendu ---------- */
+    const fmt = n => n.toFixed(1).replace('.', ',');
+    function starString(rating) {
+      const full = Math.round(rating);
+      return '★'.repeat(full) + '☆'.repeat(5 - full);
+    }
+    const el = id => document.getElementById(id);
+
+    function renderIdentity(p) {
+      el('identity').innerHTML = `
+        <div class="id-top">
+          <div class="id-avatar"></div>
+          <div>
+            <div class="id-name">${p.name}</div>
+            <span class="id-badge">${p.roleIcon} ${p.role}</span>
+          </div>
+        </div>
+        <div class="id-meta">
+          📍 ${p.location}<br/>
+          Membre depuis <b>${p.memberSince}</b>
+        </div>
+        <div class="chips">
+          ${p.verified.map(v => `<span class="chip">✓ ${v}</span>`).join('')}
+        </div>`;
+    }
+
+    function renderScore(p) {
+      el('score').innerHTML = `
+        <div class="score-seen"><span class="arrow">⇄</span> ${p.seenBy}</div>
+        <div class="score-main">
+          <span class="score-num">${fmt(p.score)}</span>
+          <div>
+            <div class="stars">${starString(p.score)}</div>
+            <div class="score-count">${p.reviewCount} avis</div>
+          </div>
+        </div>
+        <div class="criteria">
+          ${p.criteria.map(c => `
+            <div class="crit">
+              <div class="crit-head"><span>${c.label}</span><span class="v">${fmt(c.value)}</span></div>
+              <div class="crit-track"><div class="crit-fill" style="width:${(c.value/5*100).toFixed(0)}%"></div></div>
+            </div>`).join('')}
+        </div>`;
+    }
+
+    function renderMain(p) {
+      const coll = `
+        <section class="panel-section">
+          <div class="section-h">${p.collection.icon} ${p.collection.title}<span class="count">${p.collection.items.length}</span></div>
+          <div class="coll">
+            ${p.collection.items.map(i => `
+              <div class="coll-item">
+                <div class="coll-thumb"></div>
+                <div class="coll-title">${i.title}</div>
+                <div class="coll-sub">${i.sub}</div>
+                <div class="coll-meta">${i.meta}</div>
+              </div>`).join('')}
+          </div>
+        </section>`;
+
+      const reviews = `
+        <section class="panel-section">
+          <div class="section-h">Avis reçus<span class="count">${p.reviewCount} au total</span></div>
+          <div class="reviews">
+            ${p.reviews.map(r => `
+              <article class="review">
+                <div class="rv-head">
+                  <div class="rv-avatar"></div>
+                  <div class="rv-who">
+                    <div class="rv-name">${r.author}</div>
+                    <div class="rv-sub">${r.authorRole} · ${r.date}</div>
+                  </div>
+                  <div class="rv-stars">${starString(r.rating)}</div>
+                </div>
+                <p class="rv-text">${r.text}</p>
+                ${r.response ? `
+                  <div class="rv-response">
+                    <div class="r-label">Réponse de ${p.name}</div>
+                    <div class="r-text">${r.response}</div>
+                  </div>` : `
+                  <div class="rv-actions"><button class="rv-reply">Répondre à cet avis</button></div>`}
+              </article>`).join('')}
+          </div>
+        </section>`;
+
+      const rgpd = `
+        <div class="note-rgpd">
+          <b>Garde-fou :</b> seuls les avis liés à une location vérifiée apparaissent ici,
+          et la personne notée dispose toujours d'un droit de réponse. C'est ce qui rend
+          la notation de personnes conforme au RGPD.
+        </div>`;
+
+      el('main').innerHTML = coll + reviews + rgpd;
+    }
+
+    function render(key) {
+      const p = PROFILES[key];
+      renderIdentity(p); renderScore(p); renderMain(p);
+      el('seg-pro').classList.toggle('active', key === 'proprietaire');
+      el('seg-loc').classList.toggle('active', key === 'locataire');
+    }
+
+    el('seg-pro').addEventListener('click', () => render('proprietaire'));
+    el('seg-loc').addEventListener('click', () => render('locataire'));
+    render('proprietaire');
+  </script>
+</body>
+</html>
