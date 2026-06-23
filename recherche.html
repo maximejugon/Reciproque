@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     --ink:#0A1B19; --petrol-900:#0C2E2A; --petrol-700:#114F47; --petrol-500:#1A6B61;
@@ -52,7 +53,7 @@
   .results-wrap{max-width:880px;margin:0 auto;padding:24px clamp(16px,4vw,40px) 80px}
   .results-count{font-size:13px;color:var(--muted-dark);margin-bottom:16px}
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  .pcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:13px;transition:border-color .15s,transform .08s;cursor:pointer}
+  .pcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:13px;transition:border-color .15s,transform .08s;cursor:pointer;text-decoration:none;color:inherit}
   .pcard:hover{border-color:var(--petrol-500);transform:translateY(-2px)}
   .pcard-top{display:flex;align-items:center;gap:12px}
   .pavatar{width:48px;height:48px;border-radius:50%;flex:none;background:linear-gradient(135deg,var(--petrol-500),var(--honey))}
@@ -113,62 +114,97 @@
   </div>
 
   <script>
-    /* Données de démo — forme identique à ce que renverra Supabase
-       (table profiles jointe à la vue v_profil_notes). */
-    const PROFILS = [
-      { nom:"Marc Delmas",    role:"proprietaire", ville:"Gràcia, Barcelone",   note:4.8, avis:23 },
-      { nom:"Léa Martin",     role:"locataire",    ville:"Barcelone",           note:4.9, avis:7  },
-      { nom:"Sofia Navarro",  role:"locataire",    ville:"Eixample, Barcelone", note:4.6, avis:5  },
-      { nom:"Anna Puig",      role:"proprietaire", ville:"Poblenou, Barcelone", note:4.7, avis:14 },
-      { nom:"Tom Riera",      role:"locataire",    ville:"Sants, Barcelone",    note:4.2, avis:4  },
-      { nom:"Jordi Costa",    role:"proprietaire", ville:"Sarrià, Barcelone",   note:3.9, avis:9  },
-      { nom:"Clara Vidal",    role:"locataire",    ville:"Gràcia, Barcelone",   note:5.0, avis:6  },
-      { nom:"Pau Serra",      role:"proprietaire", ville:"El Born, Barcelone",  note:4.5, avis:18 },
-    ];
+    const SUPABASE_URL = "https://zmxqeqwiuyzczisxudkt.supabase.co";
+    const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_mIzp02DstouuN1M1or8D6Q_wVMDI0au";
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
     const roleLabel = { proprietaire:"🏠 Propriétaire", locataire:"🔑 Locataire" };
     const seenLabel = { proprietaire:"vu par ses locataires", locataire:"vu par ses propriétaires" };
-    const fmt = n => n.toFixed(1).replace('.', ',');
+    const fmt = n => Number(n).toFixed(1).replace('.', ',');
     const stars = n => '★'.repeat(Math.round(n)) + '☆'.repeat(5 - Math.round(n));
 
     let roleFilter = 'tous';
+    let PROFILS = [];   // rempli depuis Supabase
 
     function render() {
       const q = document.getElementById('q').value.trim().toLowerCase();
       const minR = parseFloat(document.getElementById('minrating').value);
       const list = PROFILS.filter(p =>
         (roleFilter === 'tous' || p.role === roleFilter) &&
-        p.note >= minR &&
-        (q === '' || p.nom.toLowerCase().includes(q) || p.ville.toLowerCase().includes(q))
-      ).sort((a,b) => b.note - a.note);
+        (minR === 0 || (p.note !== null && p.note >= minR)) &&
+        (q === '' || (p.nom||'').toLowerCase().includes(q) || (p.ville||'').toLowerCase().includes(q))
+      ).sort((a,b) => (b.note ?? -1) - (a.note ?? -1));
 
       document.getElementById('count').textContent =
-        list.length ? `${list.length} profil${list.length>1?'s':''} trouvé${list.length>1?'s':''}` : '';
+        list.length ? `${list.length} profil${list.length>1?'s':''}` : '';
 
       const grid = document.getElementById('grid');
       if (!list.length) {
-        grid.innerHTML = '<div class="empty">Aucun profil ne correspond. Essayez d\'élargir votre recherche.</div>';
+        grid.innerHTML = '<div class="empty">Aucun profil ne correspond. Essaie d\'élargir ta recherche.</div>';
         return;
       }
-      grid.innerHTML = list.map(p => `
-        <article class="pcard" tabindex="0">
+      grid.innerHTML = list.map(p => {
+        const noted = (p.note !== null && p.note !== undefined);
+        const scoreBlock = noted
+          ? `<span class="pscore-num">${fmt(p.note)}</span>
+             <div>
+               <div class="pstars">${stars(p.note)}</div>
+               <div class="pcount">${p.avis} avis</div>
+             </div>`
+          : `<span class="pcount" style="font-style:italic">Nouveau profil · pas encore noté</span>`;
+        const role = p.role ? `<span class="pbadge">${roleLabel[p.role]||p.role}</span>` : '';
+        const seen = (p.role && noted) ? `<span class="pseen"><span class="arrow">⇄</span> ${seenLabel[p.role]}</span>` : '';
+        return `
+        <a class="pcard" href="profil.html?id=${p.id}">
           <div class="pcard-top">
             <div class="pavatar"></div>
             <div>
-              <div class="pname">${p.nom}</div>
-              <div class="pmeta">📍 ${p.ville}</div>
-              <span class="pbadge">${roleLabel[p.role]}</span>
+              <div class="pname">${p.nom || 'Profil sans nom'}</div>
+              <div class="pmeta">📍 ${p.ville || '—'}</div>
+              ${role}
             </div>
           </div>
           <div class="pscore">
-            <span class="pscore-num">${fmt(p.note)}</span>
-            <div>
-              <div class="pstars">${stars(p.note)}</div>
-              <div class="pcount">${p.avis} avis</div>
-            </div>
-            <span class="pseen"><span class="arrow">⇄</span> ${seenLabel[p.role]}</span>
+            ${scoreBlock}
+            ${seen}
           </div>
-        </article>`).join('');
+        </a>`;
+      }).join('');
+    }
+
+    async function chargerProfils() {
+      const grid = document.getElementById('grid');
+
+      // il faut être connecté pour consulter les profils (règle de sécurité)
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) {
+        document.getElementById('count').textContent = '';
+        grid.innerHTML = '<div class="empty">Connecte-toi d\'abord pour consulter les profils.<br><a href="index.html" style="color:var(--petrol-700);font-weight:600">Aller me connecter</a></div>';
+        return;
+      }
+
+      grid.innerHTML = '<div class="empty">Chargement…</div>';
+
+      const [{ data: profils, error: e1 }, { data: notes }] = await Promise.all([
+        sb.from('profiles').select('id, nom, role, localisation'),
+        sb.from('v_profil_notes').select('profil_id, note_moyenne, nombre_avis'),
+      ]);
+
+      if (e1) { grid.innerHTML = '<div class="empty">Erreur de chargement : ' + e1.message + '</div>'; return; }
+
+      const notesMap = {};
+      (notes || []).forEach(n => { notesMap[n.profil_id] = n; });
+
+      PROFILS = (profils || []).map(p => ({
+        id: p.id,
+        nom: p.nom,
+        role: p.role,
+        ville: p.localisation,
+        note: notesMap[p.id] ? Number(notesMap[p.id].note_moyenne) : null,
+        avis: notesMap[p.id] ? notesMap[p.id].nombre_avis : 0,
+      }));
+
+      render();
     }
 
     document.querySelectorAll('.seg button').forEach(b =>
@@ -182,7 +218,8 @@
     document.getElementById('q').addEventListener('input', render);
     document.getElementById('go').addEventListener('click', render);
     document.getElementById('minrating').addEventListener('change', render);
-    render();
+
+    chargerProfils();
   </script>
 </body>
 </html>

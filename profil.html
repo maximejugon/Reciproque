@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Réciproque — Profil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --ink:#0A1B19; --petrol-900:#0C2E2A; --petrol-700:#114F47; --petrol-500:#1A6B61;
+    --honey:#E6A24C; --honey-soft:#F2C98A; --paper:#F4EEE3; --card:#FFFFFF;
+    --paper-dim:#ECE5D8; --text-dark:#1B2421; --muted-dark:#5E6B66;
+    --on-dark:#EDEAE2; --on-dark-dim:rgba(237,234,226,.62); --line:#E4DCCE;
+    --display:"Bricolage Grotesque",system-ui,sans-serif; --body:"Inter",system-ui,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:var(--body);background:var(--paper);color:var(--text-dark);-webkit-font-smoothing:antialiased}
+
+  .topbar{background:var(--petrol-900);color:var(--on-dark);padding:14px clamp(16px,4vw,40px);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20}
+  .brand{display:flex;align-items:center;gap:9px;font-family:var(--display);font-weight:700;font-size:17px;text-decoration:none;color:inherit}
+  .brand .mark{width:26px;height:26px;display:grid;place-items:center;border-radius:8px;background:var(--honey);color:var(--petrol-900);font-size:15px}
+  .mainnav{display:flex;gap:4px;align-items:center}
+  .mainnav a{color:var(--on-dark-dim);text-decoration:none;font-size:13.5px;font-weight:500;padding:7px 11px;border-radius:9px;transition:background .15s,color .15s}
+  .mainnav a:hover{color:var(--on-dark);background:rgba(237,234,226,.08)}
+
+  .wrap{max-width:1080px;margin:0 auto;padding:clamp(20px,4vw,40px) clamp(16px,4vw,40px) 80px;display:grid;grid-template-columns:340px 1fr;gap:28px;align-items:start}
+  .wrap.hidden{display:none}
+  .col-side{position:sticky;top:86px;display:flex;flex-direction:column;gap:16px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px}
+
+  .back{display:inline-flex;align-items:center;gap:6px;color:var(--petrol-700);text-decoration:none;font-size:13px;font-weight:500;margin-bottom:4px}
+
+  .id-top{display:flex;align-items:center;gap:14px}
+  .id-avatar{width:60px;height:60px;border-radius:50%;flex:none;background:linear-gradient(135deg,var(--petrol-500),var(--honey))}
+  .id-name{font-family:var(--display);font-weight:700;font-size:21px;letter-spacing:-0.02em}
+  .id-badge{display:inline-flex;align-items:center;gap:5px;margin-top:5px;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:rgba(26,107,97,.10);color:var(--petrol-700)}
+  .id-meta{margin-top:16px;font-size:13px;color:var(--muted-dark);line-height:1.7}
+  .id-meta b{color:var(--text-dark);font-weight:600}
+  .id-bio{margin-top:12px;font-size:13.5px;line-height:1.55;color:#2A332F}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+  .chip{font-size:11.5px;color:var(--petrol-700);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:4px 9px;display:inline-flex;align-items:center;gap:5px}
+
+  .score-seen{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-dark);display:flex;align-items:center;gap:7px}
+  .score-seen .arrow{color:var(--honey)}
+  .score-main{display:flex;align-items:baseline;gap:10px;margin:12px 0 4px}
+  .score-num{font-family:var(--display);font-weight:800;font-size:46px;line-height:1;color:var(--petrol-700);letter-spacing:-0.03em}
+  .stars{color:var(--honey);font-size:15px;letter-spacing:2px}
+  .score-count{font-size:13px;color:var(--muted-dark)}
+  .score-empty{font-size:14px;color:var(--muted-dark);line-height:1.5}
+
+  .criteria{margin-top:20px;display:flex;flex-direction:column;gap:13px}
+  .crit-head{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+  .crit-head .v{font-weight:600;font-family:var(--display);color:var(--petrol-700)}
+  .crit-track{height:6px;background:var(--paper-dim);border-radius:999px;overflow:hidden}
+  .crit-fill{height:100%;background:linear-gradient(90deg,var(--honey),var(--honey-soft));border-radius:999px}
+
+  .col-main{display:flex;flex-direction:column;gap:22px}
+  .section-h{font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:-0.01em;margin-bottom:14px;display:flex;align-items:baseline;gap:9px}
+  .section-h .count{font-size:13px;color:var(--muted-dark);font-weight:500;font-family:var(--body)}
+  .reviews{display:flex;flex-direction:column;gap:14px}
+  .review{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+  .rv-head{display:flex;align-items:center;gap:11px}
+  .rv-avatar{width:38px;height:38px;border-radius:50%;flex:none;background:linear-gradient(135deg,var(--petrol-500),var(--honey))}
+  .rv-who{flex:1}
+  .rv-name{font-family:var(--display);font-weight:600;font-size:14.5px}
+  .rv-sub{font-size:12px;color:var(--muted-dark)}
+  .rv-stars{color:var(--honey);font-size:13px;letter-spacing:1px}
+  .rv-text{margin-top:11px;font-size:14px;line-height:1.55;color:#2A332F}
+  .rv-response{margin-top:13px;padding:13px 14px;background:var(--paper);border-radius:11px;border-left:3px solid var(--honey)}
+  .rv-response .r-label{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted-dark);font-weight:600}
+  .rv-response .r-text{font-size:13.5px;line-height:1.5;margin-top:5px;color:#2A332F}
+  .empty-reviews{background:var(--card);border:1px dashed var(--line);border-radius:14px;padding:22px;text-align:center;color:var(--muted-dark);font-size:14px}
+
+  .notice{max-width:520px;margin:60px auto;padding:0 24px;text-align:center;color:var(--muted-dark);font-size:15px;line-height:1.6}
+  .notice.hidden{display:none}
+  .notice a{color:var(--petrol-700);font-weight:600;text-decoration:underline}
+
+  :focus-visible{outline:2px solid var(--honey);outline-offset:2px;border-radius:6px}
+  @media(max-width:880px){.wrap{grid-template-columns:1fr}.col-side{position:static}}
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html"><span class="mark">↺</span> Réciproque</a>
+    <nav class="mainnav">
+      <a href="recherche.html">Rechercher</a>
+      <a href="mon-profil.html">Mon profil</a>
+    </nav>
+  </header>
+
+  <div class="notice" id="notice">Chargement…</div>
+
+  <main class="wrap hidden" id="wrap">
+    <aside class="col-side">
+      <a class="back" href="recherche.html">← Retour à la recherche</a>
+      <div class="panel" id="identity"></div>
+      <div class="panel" id="score"></div>
+    </aside>
+    <div class="col-main" id="main"></div>
+  </main>
+
+  <script>
+    const SUPABASE_URL = "https://zmxqeqwiuyzczisxudkt.supabase.co";
+    const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_mIzp02DstouuN1M1or8D6Q_wVMDI0au";
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+    const el = id => document.getElementById(id);
+    const roleLabel = { proprietaire:"🏠 Propriétaire", locataire:"🔑 Locataire" };
+    const seenLabel = { proprietaire:"Vu par ses locataires", locataire:"Vu par ses propriétaires" };
+    const fmt = n => Number(n).toFixed(1).replace('.', ',');
+    const stars = n => '★'.repeat(Math.round(n)) + '☆'.repeat(5 - Math.round(n));
+    const moisAnnee = d => new Date(d).toLocaleDateString('fr-FR', { month:'long', year:'numeric' });
+
+    function showNotice(html){ el('notice').innerHTML = html; el('notice').classList.remove('hidden'); el('wrap').classList.add('hidden'); }
+    function showProfile(){ el('notice').classList.add('hidden'); el('wrap').classList.remove('hidden'); }
+
+    function criteriaAverages(avisList){
+      const sums = {}, counts = {};
+      avisList.forEach(a => {
+        const c = a.criteres || {};
+        Object.keys(c).forEach(k => {
+          const v = Number(c[k]);
+          if(!isNaN(v) && v > 0){ sums[k] = (sums[k]||0) + v; counts[k] = (counts[k]||0) + 1; }
+        });
+      });
+      return Object.keys(sums).map(k => ({ label:k, value: sums[k]/counts[k] }));
+    }
+
+    function renderIdentity(p){
+      const verif = p.identite_verifiee ? '<div class="chips"><span class="chip">✓ Identité vérifiée</span></div>' : '';
+      el('identity').innerHTML = `
+        <div class="id-top">
+          <div class="id-avatar"></div>
+          <div>
+            <div class="id-name">${p.nom || 'Profil sans nom'}</div>
+            ${p.role ? `<span class="id-badge">${roleLabel[p.role]}</span>` : ''}
+          </div>
+        </div>
+        <div class="id-meta">
+          ${p.localisation ? '📍 ' + p.localisation + '<br/>' : ''}
+          ${p.cree_le ? 'Membre depuis <b>' + moisAnnee(p.cree_le) + '</b>' : ''}
+        </div>
+        ${p.bio ? `<div class="id-bio">${p.bio}</div>` : ''}
+        ${verif}`;
+    }
+
+    function renderScore(p, note, avisList){
+      const hasNote = note && note.nombre_avis > 0;
+      if(!hasNote){
+        el('score').innerHTML = `
+          <div class="score-seen"><span class="arrow">⇄</span> ${seenLabel[p.role] || 'Réputation'}</div>
+          <div class="score-empty" style="margin-top:12px">Nouveau profil — pas encore d'avis.</div>`;
+        return;
+      }
+      const crits = criteriaAverages(avisList);
+      el('score').innerHTML = `
+        <div class="score-seen"><span class="arrow">⇄</span> ${seenLabel[p.role] || 'Réputation'}</div>
+        <div class="score-main">
+          <span class="score-num">${fmt(note.note_moyenne)}</span>
+          <div>
+            <div class="stars">${stars(note.note_moyenne)}</div>
+            <div class="score-count">${note.nombre_avis} avis</div>
+          </div>
+        </div>
+        ${crits.length ? `<div class="criteria">${crits.map(c => `
+          <div>
+            <div class="crit-head"><span>${c.label}</span><span class="v">${fmt(c.value)}</span></div>
+            <div class="crit-track"><div class="crit-fill" style="width:${(c.value/5*100).toFixed(0)}%"></div></div>
+          </div>`).join('')}</div>` : ''}`;
+    }
+
+    function renderReviews(avisList){
+      const h = `<div class="section-h">Avis reçus<span class="count">${avisList.length}</span></div>`;
+      if(!avisList.length){
+        el('main').innerHTML = h + `<div class="empty-reviews">Cette personne n'a pas encore reçu d'avis.</div>`;
+        return;
+      }
+      const cards = avisList.map(a => {
+        const auteur = a.auteur || {};
+        const sub = [auteur.role ? (roleLabel[auteur.role]||auteur.role).replace(/^.. /,'') : null, a.cree_le ? moisAnnee(a.cree_le) : null].filter(Boolean).join(' · ');
+        return `
+        <article class="review">
+          <div class="rv-head">
+            <div class="rv-avatar"></div>
+            <div class="rv-who">
+              <div class="rv-name">${auteur.nom || 'Utilisateur'}</div>
+              <div class="rv-sub">${sub}</div>
+            </div>
+            <div class="rv-stars">${stars(a.note)}</div>
+          </div>
+          ${a.commentaire ? `<p class="rv-text">${a.commentaire}</p>` : ''}
+          ${a.reponse ? `<div class="rv-response"><div class="r-label">Réponse</div><div class="r-text">${a.reponse}</div></div>` : ''}
+        </article>`;
+      }).join('');
+      el('main').innerHTML = h + `<div class="reviews">${cards}</div>`;
+    }
+
+    async function init(){
+      const profilId = new URLSearchParams(location.search).get('id');
+      if(!profilId){ showNotice("Aucun profil indiqué. <a href='recherche.html'>Retour à la recherche</a>"); return; }
+
+      const { data: { session } } = await sb.auth.getSession();
+      if(!session){ showNotice("Connecte-toi pour consulter ce profil.<br><a href='index.html'>Se connecter</a>"); return; }
+
+      const { data: p, error: ep } = await sb.from('profiles')
+        .select('id, nom, role, localisation, bio, identite_verifiee, cree_le')
+        .eq('id', profilId).maybeSingle();
+      if(ep){ showNotice('Erreur : ' + ep.message); return; }
+      if(!p){ showNotice("Ce profil est introuvable. <a href='recherche.html'>Retour à la recherche</a>"); return; }
+
+      const { data: note } = await sb.from('v_profil_notes')
+        .select('note_moyenne, nombre_avis').eq('profil_id', profilId).maybeSingle();
+
+      const { data: avis } = await sb.from('avis')
+        .select('id, note, criteres, commentaire, reponse, cree_le, auteur:auteur_id(nom, role)')
+        .eq('sujet_id', profilId).eq('statut','publie')
+        .order('cree_le', { ascending:false });
+
+      renderIdentity(p);
+      renderScore(p, note, avis || []);
+      renderReviews(avis || []);
+      showProfile();
+    }
+
+    init();
+  </script>
+</body>
+</html>
