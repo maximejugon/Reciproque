@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Réciproque — Louez en confiance, des deux côtés</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<!-- Supabase JS (client-side auth) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --ink: #0A1B19;
+    --petrol-900: #0C2E2A;
+    --petrol-700: #114F47;
+    --petrol-500: #1A6B61;
+    --honey: #E6A24C;
+    --honey-soft: #F2C98A;
+    --paper: #F8F4ED;
+    --paper-dim: #ECE5D8;
+    --text-dark: #1B2421;
+    --muted-dark: #5E6B66;
+    --on-dark: #EDEAE2;
+    --on-dark-dim: rgba(237, 234, 226, 0.60);
+    --line-dark: rgba(237, 234, 226, 0.14);
+    --line-light: #DED6C7;
+    --danger: #B23A3A;
+    --ok: #2E7D5B;
+    --radius: 18px;
+    --display: "Bricolage Grotesque", system-ui, sans-serif;
+    --body: "Inter", system-ui, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: var(--body);
+    background: var(--petrol-900);
+    color: var(--on-dark);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .stage {
+    min-height: 100vh;
+    background:
+      radial-gradient(120% 90% at 12% 0%, var(--petrol-700) 0%, var(--petrol-900) 55%),
+      var(--petrol-900);
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+  }
+  /* ---------- LEFT : pitch ---------- */
+  .pitch {
+    padding: clamp(28px, 5vw, 72px);
+    display: flex; flex-direction: column; justify-content: space-between;
+    position: relative;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--display); font-weight: 700; font-size: 19px; letter-spacing: -0.01em;
+  }
+  .brand .mark {
+    width: 30px; height: 30px; display: grid; place-items: center;
+    border-radius: 9px; background: var(--honey); color: var(--petrol-900); font-size: 17px;
+  }
+  .pitch-body { max-width: 520px; margin: clamp(40px, 7vh, 90px) 0; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12.5px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--honey-soft); margin-bottom: 22px;
+  }
+  .eyebrow::before { content: ""; width: 22px; height: 1px; background: var(--honey); }
+  h1 {
+    font-family: var(--display); font-weight: 700;
+    font-size: clamp(34px, 4.6vw, 56px); line-height: 1.02; letter-spacing: -0.025em;
+  }
+  h1 em { font-style: normal; color: var(--honey); }
+  .lede {
+    margin-top: 22px; font-size: clamp(15px, 1.4vw, 17px); line-height: 1.55;
+    color: var(--on-dark-dim); max-width: 440px;
+  }
+  .reciprocity {
+    margin-top: clamp(34px, 5vh, 52px);
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 14px;
+    max-width: 480px;
+  }
+  .rep-card {
+    background: rgba(248, 244, 237, 0.04); border: 1px solid var(--line-dark);
+    border-radius: 14px; padding: 16px 16px 14px;
+  }
+  .rep-role { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--on-dark-dim); }
+  .rep-person { display: flex; align-items: center; gap: 10px; margin: 11px 0 12px; }
+  .rep-avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--petrol-500), var(--honey)); flex: none;
+  }
+  .rep-name { font-family: var(--display); font-weight: 600; font-size: 15px; }
+  .rep-meta { font-size: 11.5px; color: var(--on-dark-dim); }
+  .rep-score { display: flex; align-items: baseline; gap: 7px; }
+  .rep-num { font-family: var(--display); font-weight: 700; font-size: 25px; color: var(--honey); letter-spacing: -0.02em; }
+  .rep-stars { color: var(--honey); font-size: 12px; letter-spacing: 1px; }
+  .rep-count { font-size: 11.5px; color: var(--on-dark-dim); }
+  .swap {
+    width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%;
+    border: 1px solid var(--line-dark); color: var(--honey-soft); font-size: 15px; flex: none;
+  }
+  .foot-note { font-size: 12.5px; color: var(--on-dark-dim); display: flex; gap: 18px; flex-wrap: wrap; }
+  .foot-note span { display: inline-flex; align-items: center; gap: 7px; }
+  .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--honey); flex: none; }
+  /* ---------- RIGHT : auth gate ---------- */
+  .gate {
+    background: var(--paper); color: var(--text-dark);
+    padding: clamp(28px, 4vw, 56px); display: flex; align-items: center; justify-content: center;
+  }
+  .card { width: 100%; max-width: 380px; }
+  .card-h { font-family: var(--display); font-weight: 700; font-size: 26px; letter-spacing: -0.02em; }
+  .card-sub { margin-top: 7px; font-size: 14px; color: var(--muted-dark); line-height: 1.5; }
+  .roles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 26px 0 20px; }
+  .role {
+    border: 1.5px solid var(--line-light); background: transparent; border-radius: 13px;
+    padding: 13px 12px; cursor: pointer; text-align: left; font-family: var(--body);
+    transition: border-color .15s, background .15s, transform .08s;
+  }
+  .role:hover { border-color: var(--petrol-500); }
+  .role:active { transform: scale(.99); }
+  .role.active { border-color: var(--petrol-700); background: rgba(26, 107, 97, 0.08); }
+  .role-ic { font-size: 18px; }
+  .role-t { display: block; font-family: var(--display); font-weight: 600; font-size: 14.5px; margin-top: 6px; color: var(--text-dark); }
+  .role-d { display: block; font-size: 11.5px; color: var(--muted-dark); margin-top: 2px; }
+  .oauth { display: flex; flex-direction: column; gap: 10px; }
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 11px; width: 100%;
+    padding: 13px; border-radius: 12px; font-family: var(--body); font-size: 14.5px; font-weight: 500;
+    cursor: pointer; border: 1.5px solid var(--line-light); background: #fff; color: var(--text-dark);
+    transition: border-color .15s, transform .08s, background .15s;
+  }
+  .btn:hover { border-color: var(--muted-dark); }
+  .btn:active { transform: scale(.99); }
+  .btn:disabled { opacity: .55; cursor: not-allowed; }
+  .btn svg { width: 18px; height: 18px; flex: none; }
+  .btn.apple { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .btn.apple:hover { background: #000; }
+  .sep { display: flex; align-items: center; gap: 12px; margin: 18px 0; color: var(--muted-dark); font-size: 12px; }
+  .sep::before, .sep::after { content: ""; height: 1px; flex: 1; background: var(--line-light); }
+  .btn.email { border-color: var(--petrol-700); background: var(--petrol-700); color: var(--paper); }
+  .btn.email:hover { background: var(--petrol-500); border-color: var(--petrol-500); }
+  /* email field */
+  .email-form { margin-top: 10px; display: none; flex-direction: column; gap: 10px; }
+  .email-form.open { display: flex; }
+  .email-form input {
+    width: 100%; padding: 13px; border-radius: 12px; border: 1.5px solid var(--line-light);
+    font-family: var(--body); font-size: 14.5px; color: var(--text-dark); background: #fff;
+  }
+  .email-form input:focus { border-color: var(--petrol-700); outline: none; }
+  /* status */
+  .status { margin-top: 14px; font-size: 13px; line-height: 1.45; display: none; padding: 11px 13px; border-radius: 11px; }
+  .status.show { display: block; }
+  .status.info { background: rgba(26,107,97,.08); color: var(--petrol-700); }
+  .status.ok { background: rgba(46,125,91,.10); color: var(--ok); }
+  .status.err { background: rgba(178,58,58,.08); color: var(--danger); }
+  .fine { margin-top: 20px; font-size: 11.5px; line-height: 1.5; color: var(--muted-dark); text-align: center; }
+  .fine a { color: var(--petrol-700); text-decoration: underline; text-underline-offset: 2px; }
+  .switch { margin-top: 18px; text-align: center; font-size: 13px; color: var(--muted-dark); }
+  .switch button {
+    background: none; border: none; cursor: pointer; font-family: var(--body);
+    font-size: 13px; font-weight: 600; color: var(--petrol-700);
+    text-decoration: underline; text-underline-offset: 2px;
+  }
+  /* logged-in panel */
+  .signed-in { display: none; text-align: center; }
+  .signed-in.show { display: block; }
+  .si-avatar {
+    width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 16px;
+    background: linear-gradient(135deg, var(--petrol-500), var(--honey));
+  }
+  .si-email { font-family: var(--display); font-weight: 600; font-size: 18px; }
+  .si-role { margin-top: 6px; font-size: 13px; color: var(--muted-dark); }
+  .si-role b { color: var(--petrol-700); }
+  .si-out {
+    margin-top: 24px; padding: 12px; width: 100%; border-radius: 12px; cursor: pointer;
+    border: 1.5px solid var(--line-light); background: #fff; color: var(--text-dark);
+    font-family: var(--body); font-size: 14px; font-weight: 500;
+  }
+  .si-out:hover { border-color: var(--muted-dark); }
+  :focus-visible { outline: 2px solid var(--honey); outline-offset: 2px; border-radius: 6px; }
+  @media (max-width: 900px) {
+    .stage { grid-template-columns: 1fr; }
+    .pitch { order: 2; } .gate { order: 1; min-height: 100vh; }
+    .reciprocity { display: none; } .pitch-body { margin: 36px 0 24px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+  <main class="stage">
+    <section class="pitch">
+      <div class="brand"><span class="mark">↺</span> Réciproque</div>
+      <div class="pitch-body">
+        <span class="eyebrow">La confiance, dans les deux sens</span>
+        <h1>Louez en confiance,<br /><em>des deux côtés.</em></h1>
+        <p class="lede">
+          Avant de signer, consultez les avis. Propriétaires et locataires
+          se notent mutuellement, après une location vérifiée — pour que
+          chacun sache à qui il a affaire.
+        </p>
+        <div class="reciprocity">
+          <div class="rep-card">
+            <div class="rep-role">Vu par ses locataires</div>
+            <div class="rep-person">
+              <div class="rep-avatar"></div>
+              <div><div class="rep-name">Marc D.</div><div class="rep-meta">Propriétaire · Gràcia</div></div>
+            </div>
+            <div class="rep-score"><span class="rep-num">4,8</span><span class="rep-stars">★★★★★</span><span class="rep-count">· 23 avis</span></div>
+          </div>
+          <div class="swap" aria-hidden="true">⇄</div>
+          <div class="rep-card">
+            <div class="rep-role">Vu par ses propriétaires</div>
+            <div class="rep-person">
+              <div class="rep-avatar"></div>
+              <div><div class="rep-name">Léa M.</div><div class="rep-meta">Locataire · 3 baux</div></div>
+            </div>
+            <div class="rep-score"><span class="rep-num">4,9</span><span class="rep-stars">★★★★★</span><span class="rep-count">· 7 avis</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="foot-note">
+        <span><span class="dot"></span> Avis liés à une location réelle</span>
+        <span><span class="dot"></span> Droit de réponse garanti</span>
+      </div>
+    </section>
+
+    <section class="gate">
+      <!-- AUTH CARD -->
+      <div class="card" id="auth-card">
+        <h2 class="card-h" id="card-title">Créez votre compte</h2>
+        <p class="card-sub" id="card-sub">
+          L'accès aux profils et aux avis nécessite un compte. C'est gratuit
+          et ça prend dix secondes.
+        </p>
+
+        <div class="roles" role="group" aria-label="Type de profil">
+          <button class="role active" data-role="proprietaire" aria-pressed="true">
+            <span class="role-ic">🏠</span>
+            <span class="role-t">Je suis propriétaire</span>
+            <span class="role-d">Je loue un logement</span>
+          </button>
+          <button class="role" data-role="locataire" aria-pressed="false">
+            <span class="role-ic">🔑</span>
+            <span class="role-t">Je suis locataire</span>
+            <span class="role-d">Je cherche à louer</span>
+          </button>
+        </div>
+
+        <div class="oauth">
+          <button class="btn google" id="btn-google">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.1a6.6 6.6 0 0 1 0-4.2V7.06H2.18a11 11 0 0 0 0 9.88l3.66-2.84z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/>
+            </svg>
+            Continuer avec Google
+          </button>
+          <button class="btn apple" id="btn-apple">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M16.37 12.78c.02 2.5 2.18 3.32 2.2 3.33-.02.06-.34 1.18-1.13 2.34-.68 1-1.39 2-2.5 2.02-1.1.02-1.45-.65-2.7-.65s-1.64.63-2.68.67c-1.08.04-1.9-1.08-2.58-2.07-1.4-2.03-2.47-5.73-1.03-8.23.71-1.24 1.99-2.03 3.38-2.05 1.06-.02 2.06.71 2.7.71.65 0 1.86-.88 3.14-.75.53.02 2.03.21 2.99 1.62-.08.05-1.79 1.04-1.77 3.1zM14.3 6.04c.57-.69.95-1.65.85-2.6-.82.03-1.81.55-2.4 1.23-.52.61-.98 1.59-.86 2.52.91.07 1.84-.46 2.41-1.15z"/>
+            </svg>
+            Continuer avec Apple
+          </button>
+        </div>
+
+        <div class="sep">ou</div>
+        <button class="btn email" id="btn-email-toggle">Continuer avec un e-mail</button>
+        <div class="email-form" id="email-form">
+          <input type="email" id="email-input" placeholder="vous@exemple.com" autocomplete="email" />
+          <button class="btn email" id="btn-email-send">Recevoir le lien de connexion</button>
+        </div>
+
+        <div class="status" id="status" role="status"></div>
+
+        <p class="fine">
+          En continuant, vous acceptez nos <a href="#">conditions</a> et notre
+          <a href="#">politique de confidentialité</a>.
+          Vos avis ne sont visibles qu'après une location vérifiée.
+        </p>
+        <p class="switch">
+          Vous avez déjà un compte ?
+          <button id="toggle-mode">Se connecter</button>
+        </p>
+      </div>
+
+      <!-- SIGNED-IN PANEL -->
+      <div class="card signed-in" id="signed-in">
+        <div class="si-avatar"></div>
+        <div class="si-email" id="si-email">—</div>
+        <div class="si-role">Profil : <b id="si-role">—</b></div>
+        <button class="si-out" id="btn-signout">Se déconnecter</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    /* ============================================================
+       CONFIGURATION — colle ici tes deux valeurs Supabase.
+       (voir le fichier SETUP.md pour savoir où les trouver)
+       ============================================================ */
+    const SUPABASE_URL = "https://zmxqeqwiuyzczisxudkt.supabase.co";
+    const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_mIzp02DstouuN1M1or8D6Q_wVMDI0au";
+
+    const isConfigured =
+      !SUPABASE_URL.includes("VOTRE-PROJET") &&
+      !SUPABASE_PUBLISHABLE_KEY.includes("VOTRE_CLE");
+
+    let sb = null;
+    if (isConfigured) {
+      sb = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+    }
+
+    /* ---------- éléments ---------- */
+    const statusEl  = document.getElementById('status');
+    const authCard  = document.getElementById('auth-card');
+    const signedIn  = document.getElementById('signed-in');
+    const siEmail   = document.getElementById('si-email');
+    const siRole    = document.getElementById('si-role');
+
+    const roleLabels = { proprietaire: 'Propriétaire', locataire: 'Locataire' };
+    function selectedRole() {
+      const active = document.querySelector('.role.active');
+      return active ? active.dataset.role : 'proprietaire';
+    }
+    function setStatus(msg, kind) {
+      statusEl.textContent = msg;
+      statusEl.className = 'status show ' + (kind || 'info');
+    }
+    function clearStatus() { statusEl.className = 'status'; }
+
+    /* ---------- sélecteur de rôle ---------- */
+    const roles = document.querySelectorAll('.role');
+    roles.forEach(r => r.addEventListener('click', () => {
+      roles.forEach(x => { x.classList.remove('active'); x.setAttribute('aria-pressed','false'); });
+      r.classList.add('active'); r.setAttribute('aria-pressed','true');
+    }));
+
+    /* ---------- mode inscription / connexion (cosmétique) ---------- */
+    let isSignUp = true;
+    const title = document.getElementById('card-title');
+    const sub = document.getElementById('card-sub');
+    const toggle = document.getElementById('toggle-mode');
+    const switchText = toggle.parentElement;
+    toggle.addEventListener('click', () => {
+      isSignUp = !isSignUp;
+      if (isSignUp) {
+        title.textContent = 'Créez votre compte';
+        sub.textContent = "L'accès aux profils et aux avis nécessite un compte. C'est gratuit et ça prend dix secondes.";
+        switchText.childNodes[0].textContent = 'Vous avez déjà un compte ? ';
+        toggle.textContent = 'Se connecter';
+      } else {
+        title.textContent = 'Bon retour';
+        sub.textContent = 'Connectez-vous pour retrouver vos avis, vos baux et vos messages.';
+        switchText.childNodes[0].textContent = "Pas encore de compte ? ";
+        toggle.textContent = "S'inscrire";
+      }
+    });
+
+    /* ---------- champ e-mail repliable ---------- */
+    const emailForm = document.getElementById('email-form');
+    document.getElementById('btn-email-toggle').addEventListener('click', () => {
+      emailForm.classList.toggle('open');
+      if (emailForm.classList.contains('open')) document.getElementById('email-input').focus();
+    });
+
+    /* ---------- garde-fou : non configuré ---------- */
+    function notConfigured() {
+      setStatus(
+        "Mode démo : Supabase n'est pas encore configuré. Ouvre index.html, colle ton URL et ta clé publishable (étapes dans SETUP.md), puis recharge.",
+        'info'
+      );
+    }
+
+    /* ---------- connexion OAuth (Google / Apple) ---------- */
+    async function signInWithProvider(provider) {
+      if (!isConfigured) return notConfigured();
+      // on mémorise le rôle choisi pour l'appliquer au retour de la redirection
+      localStorage.setItem('rep_role', selectedRole());
+      const { error } = await sb.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo: window.location.origin + window.location.pathname }
+      });
+      if (error) setStatus('Erreur : ' + error.message, 'err');
+    }
+    document.getElementById('btn-google').addEventListener('click', () => signInWithProvider('google'));
+    document.getElementById('btn-apple').addEventListener('click', () => signInWithProvider('apple'));
+
+    /* ---------- connexion e-mail (lien magique) ---------- */
+    document.getElementById('btn-email-send').addEventListener('click', async () => {
+      if (!isConfigured) return notConfigured();
+      const email = document.getElementById('email-input').value.trim();
+      if (!email) return setStatus('Entre ton adresse e-mail.', 'err');
+      localStorage.setItem('rep_role', selectedRole());
+      setStatus('Envoi en cours…', 'info');
+      const { error } = await sb.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: window.location.origin + window.location.pathname,
+          data: { role: selectedRole() }
+        }
+      });
+      if (error) setStatus('Erreur : ' + error.message, 'err');
+      else setStatus('Lien envoyé. Vérifie ta boîte mail pour te connecter.', 'ok');
+    });
+
+    /* ---------- état connecté ---------- */
+    function showSignedIn(user) {
+      authCard.style.display = 'none';
+      signedIn.classList.add('show');
+      siEmail.textContent = user.email || 'Connecté';
+      const role = (user.user_metadata && user.user_metadata.role) || localStorage.getItem('rep_role') || 'proprietaire';
+      siRole.textContent = roleLabels[role] || role;
+    }
+    function showSignedOut() {
+      signedIn.classList.remove('show');
+      authCard.style.display = '';
+    }
+    document.getElementById('btn-signout').addEventListener('click', async () => {
+      if (sb) await sb.auth.signOut();
+      showSignedOut(); clearStatus();
+    });
+
+    /* ---------- au chargement : détecte une session existante ---------- */
+    (async () => {
+      if (!isConfigured) { notConfigured(); return; }
+      const { data: { session } } = await sb.auth.getSession();
+      if (session && session.user) showSignedIn(session.user);
+      sb.auth.onAuthStateChange((_event, session) => {
+        if (session && session.user) showSignedIn(session.user);
+        else showSignedOut();
+      });
+    })();
+  </script>
+</body>
+</html>
