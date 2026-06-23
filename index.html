@@ -269,10 +269,10 @@
         </div>
 
         <div class="sep">ou</div>
-        <button class="btn email" id="btn-email-toggle">Continuer avec un e-mail</button>
-        <div class="email-form" id="email-form">
+        <div class="email-form open" id="email-form">
           <input type="email" id="email-input" placeholder="vous@exemple.com" autocomplete="email" />
-          <button class="btn email" id="btn-email-send">Recevoir le lien de connexion</button>
+          <input type="password" id="password-input" placeholder="Mot de passe (6 caractères min.)" autocomplete="current-password" />
+          <button class="btn email" id="btn-email-send">Créer mon compte</button>
         </div>
 
         <div class="status" id="status" role="status"></div>
@@ -346,6 +346,7 @@
     const sub = document.getElementById('card-sub');
     const toggle = document.getElementById('toggle-mode');
     const switchText = toggle.parentElement;
+    const emailSendBtn = document.getElementById('btn-email-send');
     toggle.addEventListener('click', () => {
       isSignUp = !isSignUp;
       if (isSignUp) {
@@ -353,20 +354,17 @@
         sub.textContent = "L'accès aux profils et aux avis nécessite un compte. C'est gratuit et ça prend dix secondes.";
         switchText.childNodes[0].textContent = 'Vous avez déjà un compte ? ';
         toggle.textContent = 'Se connecter';
+        emailSendBtn.textContent = 'Créer mon compte';
       } else {
         title.textContent = 'Bon retour';
-        sub.textContent = 'Connectez-vous pour retrouver vos avis, vos baux et vos messages.';
+        sub.textContent = 'Connectez-vous avec votre e-mail et votre mot de passe.';
         switchText.childNodes[0].textContent = "Pas encore de compte ? ";
         toggle.textContent = "S'inscrire";
+        emailSendBtn.textContent = 'Se connecter';
       }
     });
 
-    /* ---------- champ e-mail repliable ---------- */
-    const emailForm = document.getElementById('email-form');
-    document.getElementById('btn-email-toggle').addEventListener('click', () => {
-      emailForm.classList.toggle('open');
-      if (emailForm.classList.contains('open')) document.getElementById('email-input').focus();
-    });
+    /* ---------- (le formulaire e-mail + mot de passe est toujours visible) ---------- */
 
     /* ---------- garde-fou : non configuré ---------- */
     function notConfigured() {
@@ -390,22 +388,40 @@
     document.getElementById('btn-google').addEventListener('click', () => signInWithProvider('google'));
     document.getElementById('btn-apple').addEventListener('click', () => signInWithProvider('apple'));
 
-    /* ---------- connexion e-mail (lien magique) ---------- */
+    /* ---------- inscription / connexion par e-mail + mot de passe ---------- */
     document.getElementById('btn-email-send').addEventListener('click', async () => {
       if (!isConfigured) return notConfigured();
       const email = document.getElementById('email-input').value.trim();
+      const password = document.getElementById('password-input').value;
       if (!email) return setStatus('Entre ton adresse e-mail.', 'err');
+      if (!password || password.length < 6) return setStatus('Choisis un mot de passe d’au moins 6 caractères.', 'err');
       localStorage.setItem('rep_role', selectedRole());
-      setStatus('Envoi en cours…', 'info');
-      const { error } = await sb.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: window.location.origin + window.location.pathname,
-          data: { role: selectedRole() }
+
+      if (isSignUp) {
+        setStatus('Création du compte…', 'info');
+        const { data, error } = await sb.auth.signUp({
+          email, password,
+          options: { data: { role: selectedRole() } }
+        });
+        if (error) {
+          if (/already|registered/i.test(error.message))
+            setStatus('Cet e-mail a déjà un compte. Bascule sur « Se connecter » juste en dessous.', 'err');
+          else setStatus('Erreur : ' + error.message, 'err');
+        } else if (data.session) {
+          setStatus('Compte créé, te voilà connecté.', 'ok');
+        } else {
+          setStatus("Compte créé. Si tu n'es pas connecté tout de suite, désactive « Confirm email » dans Supabase (voir consignes).", 'info');
         }
-      });
-      if (error) setStatus('Erreur : ' + error.message, 'err');
-      else setStatus('Lien envoyé. Vérifie ta boîte mail pour te connecter.', 'ok');
+      } else {
+        setStatus('Connexion…', 'info');
+        const { error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) {
+          if (/invalid/i.test(error.message)) setStatus('E-mail ou mot de passe incorrect.', 'err');
+          else setStatus('Erreur : ' + error.message, 'err');
+        } else {
+          setStatus('Connexion réussie.', 'ok');
+        }
+      }
     });
 
     /* ---------- état connecté ---------- */
