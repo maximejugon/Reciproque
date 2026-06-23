@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Réciproque — Mon profil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --ink:#0A1B19; --petrol-900:#0C2E2A; --petrol-700:#114F47; --petrol-500:#1A6B61;
+    --honey:#E6A24C; --honey-soft:#F2C98A; --paper:#F4EEE3; --card:#FFFFFF;
+    --paper-dim:#ECE5D8; --text-dark:#1B2421; --muted-dark:#5E6B66;
+    --on-dark:#EDEAE2; --on-dark-dim:rgba(237,234,226,.62); --line:#E4DCCE;
+    --ok:#2E7D5B; --danger:#B23A3A;
+    --display:"Bricolage Grotesque",system-ui,sans-serif; --body:"Inter",system-ui,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:var(--body);background:var(--paper);color:var(--text-dark);-webkit-font-smoothing:antialiased}
+  .topbar{background:var(--petrol-900);color:var(--on-dark);padding:14px clamp(16px,4vw,40px);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20}
+  .brand{display:flex;align-items:center;gap:9px;font-family:var(--display);font-weight:700;font-size:17px}
+  .brand .mark{width:26px;height:26px;display:grid;place-items:center;border-radius:8px;background:var(--honey);color:var(--petrol-900);font-size:15px}
+  .nav-link{font-size:13px;color:var(--on-dark-dim);text-decoration:none}
+  .nav-link:hover{color:var(--on-dark)}
+
+  .wrap{max-width:520px;margin:0 auto;padding:clamp(20px,4vw,40px) clamp(16px,4vw,24px) 80px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px}
+
+  /* état déconnecté */
+  .locked{display:none;text-align:center}
+  .locked.show{display:block}
+  .locked .ic{font-size:34px}
+  .locked h2{font-family:var(--display);font-weight:700;font-size:20px;margin:10px 0 6px}
+  .locked p{font-size:14px;color:var(--muted-dark);line-height:1.5}
+  .locked a{display:inline-block;margin-top:18px;background:var(--petrol-700);color:var(--paper);text-decoration:none;font-weight:600;font-size:14px;padding:12px 20px;border-radius:11px}
+
+  /* loader */
+  .loading{text-align:center;color:var(--muted-dark);font-size:14px;padding:30px 0}
+
+  /* éditeur */
+  .editor{display:none}
+  .editor.show{display:block}
+  .head{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+  .avatar{width:60px;height:60px;border-radius:50%;flex:none;background:linear-gradient(135deg,var(--petrol-500),var(--honey))}
+  .email{font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:-0.01em;word-break:break-all}
+  .since{font-size:12.5px;color:var(--muted-dark);margin-top:2px}
+
+  label{display:block;font-size:12.5px;font-weight:600;color:var(--muted-dark);margin:16px 0 6px;letter-spacing:.01em}
+  input,select,textarea{width:100%;border:1.5px solid var(--line);border-radius:11px;padding:12px;font-family:var(--body);font-size:14.5px;color:var(--text-dark);background:var(--card)}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--petrol-700)}
+  textarea{min-height:90px;resize:vertical;line-height:1.5}
+
+  .save{margin-top:22px;width:100%;border:none;background:var(--petrol-700);color:var(--paper);font-family:var(--body);font-weight:600;font-size:15px;padding:14px;border-radius:12px;cursor:pointer;transition:background .15s}
+  .save:hover{background:var(--petrol-500)}
+  .save:disabled{opacity:.6;cursor:not-allowed}
+  .status{margin-top:14px;font-size:13.5px;padding:11px 13px;border-radius:11px;display:none}
+  .status.show{display:block}
+  .status.ok{background:rgba(46,125,91,.10);color:var(--ok)}
+  .status.err{background:rgba(178,58,58,.08);color:var(--danger)}
+
+  .signout{margin-top:16px;width:100%;border:1px solid var(--line);background:none;color:var(--muted-dark);font-family:var(--body);font-size:13px;padding:11px;border-radius:11px;cursor:pointer}
+  .signout:hover{border-color:var(--muted-dark)}
+
+  :focus-visible{outline:2px solid var(--honey);outline-offset:2px;border-radius:6px}
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="mark">↺</span> Réciproque</div>
+    <a class="nav-link" href="index.html">Accueil</a>
+  </header>
+
+  <main class="wrap">
+    <div class="panel">
+      <!-- chargement -->
+      <div class="loading" id="loading">Chargement de ton profil…</div>
+
+      <!-- déconnecté -->
+      <div class="locked" id="locked">
+        <div class="ic">🔒</div>
+        <h2>Tu n'es pas connecté</h2>
+        <p>Connecte-toi d'abord sur la page d'accueil, puis reviens ici pour voir et
+           modifier ton profil.</p>
+        <a href="index.html">Aller me connecter</a>
+      </div>
+
+      <!-- éditeur -->
+      <div class="editor" id="editor">
+        <div class="head">
+          <div class="avatar"></div>
+          <div>
+            <div class="email" id="email">—</div>
+            <div class="since" id="since"></div>
+          </div>
+        </div>
+
+        <label for="nom">Nom affiché</label>
+        <input id="nom" type="text" placeholder="Ton nom" />
+
+        <label for="role">Je suis</label>
+        <select id="role">
+          <option value="">— à préciser —</option>
+          <option value="proprietaire">Propriétaire</option>
+          <option value="locataire">Locataire</option>
+        </select>
+
+        <label for="ville">Ville</label>
+        <input id="ville" type="text" placeholder="Barcelone" />
+
+        <label for="bio">À propos (optionnel)</label>
+        <textarea id="bio" placeholder="Quelques mots sur toi…"></textarea>
+
+        <button class="save" id="save">Enregistrer</button>
+        <div class="status" id="status"></div>
+
+        <button class="signout" id="signout">Se déconnecter</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const SUPABASE_URL = "https://zmxqeqwiuyzczisxudkt.supabase.co";
+    const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_mIzp02DstouuN1M1or8D6Q_wVMDI0au";
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+    const el = id => document.getElementById(id);
+    let userId = null;
+
+    function show(which) {
+      el('loading').style.display = which === 'loading' ? 'block' : 'none';
+      el('locked').classList.toggle('show', which === 'locked');
+      el('editor').classList.toggle('show', which === 'editor');
+    }
+    function setStatus(msg, kind) {
+      const s = el('status');
+      s.textContent = msg;
+      s.className = 'status show ' + kind;
+    }
+
+    async function init() {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session || !session.user) { show('locked'); return; }
+
+      const user = session.user;
+      userId = user.id;
+      el('email').textContent = user.email || 'Connecté';
+
+      // lecture du profil réel
+      const { data, error } = await sb
+        .from('profiles')
+        .select('nom, role, localisation, bio, cree_le')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        show('editor');
+        setStatus("Profil chargé, mais une info n'a pas pu être lue : " + error.message, 'err');
+      } else if (data) {
+        el('nom').value   = data.nom || '';
+        el('role').value  = data.role || '';
+        el('ville').value = data.localisation || '';
+        el('bio').value   = data.bio || '';
+        if (data.cree_le) {
+          const d = new Date(data.cree_le);
+          el('since').textContent = 'Membre depuis ' + d.toLocaleDateString('fr-FR', { month:'long', year:'numeric' });
+        }
+        show('editor');
+      } else {
+        show('editor');
+      }
+    }
+
+    // enregistrement
+    el('save').addEventListener('click', async () => {
+      const btn = el('save');
+      btn.disabled = true;
+      setStatus('Enregistrement…', 'ok');
+
+      const updates = {
+        nom: el('nom').value.trim() || null,
+        role: el('role').value || null,
+        localisation: el('ville').value.trim() || null,
+        bio: el('bio').value.trim() || null,
+      };
+
+      const { error } = await sb.from('profiles').update(updates).eq('id', userId);
+      btn.disabled = false;
+
+      if (error) setStatus('Erreur : ' + error.message, 'err');
+      else setStatus('Profil enregistré ✓  (recharge la page pour vérifier que ça persiste)', 'ok');
+    });
+
+    el('signout').addEventListener('click', async () => {
+      await sb.auth.signOut();
+      show('locked');
+    });
+
+    init();
+  </script>
+</body>
+</html>
