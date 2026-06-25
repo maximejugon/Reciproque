@@ -154,6 +154,7 @@
   .pw-hint { font-size: 11.5px; color: var(--muted-dark); line-height: 1.4; margin-top: -2px; }
   .remember { display: flex; align-items: center; gap: 8px; margin-top: 14px; font-size: 13px; color: var(--muted-dark); cursor: pointer; }
   .remember input { width: 16px; height: 16px; accent-color: var(--petrol-700); cursor: pointer; }
+  .forgot-link { display: none; background: none; border: none; cursor: pointer; font-family: var(--body); font-size: 13px; color: var(--petrol-700); text-decoration: underline; text-underline-offset: 2px; margin-top: 10px; padding: 0; }
   /* status */
   .status { margin-top: 14px; font-size: 13px; line-height: 1.45; display: none; padding: 11px 13px; border-radius: 11px; }
   .status.show { display: block; }
@@ -285,6 +286,7 @@
         </div>
 
         <label class="remember"><input type="checkbox" id="remember" checked /> Rester connecté</label>
+        <button type="button" class="forgot-link" id="forgot">Mot de passe oublié ?</button>
 
         <div class="status" id="status" role="status"></div>
 
@@ -376,6 +378,7 @@
     const switchText = toggle.parentElement;
     const emailSendBtn = document.getElementById('btn-email-send');
     const pwHint = document.getElementById('pw-hint');
+    const forgotLink = document.getElementById('forgot');
     toggle.addEventListener('click', () => {
       isSignUp = !isSignUp;
       if (isSignUp) {
@@ -385,6 +388,7 @@
         toggle.textContent = 'Se connecter';
         emailSendBtn.textContent = 'Créer mon compte';
         pwHint.style.display = 'block';
+        forgotLink.style.display = 'none';
       } else {
         title.textContent = 'Bon retour';
         sub.textContent = 'Connectez-vous avec votre e-mail et votre mot de passe.';
@@ -392,6 +396,7 @@
         toggle.textContent = "S'inscrire";
         emailSendBtn.textContent = 'Se connecter';
         pwHint.style.display = 'none';
+        forgotLink.style.display = 'block';
       }
     });
 
@@ -469,6 +474,20 @@
           setStatus('Connexion réussie.', 'ok');
         }
       }
+    });
+
+    /* ---------- mot de passe oublié ---------- */
+    document.getElementById('forgot').addEventListener('click', async () => {
+      if (!isConfigured) return notConfigured();
+      const email = document.getElementById('email-input').value.trim();
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+        return setStatus("Entre d'abord ton adresse e-mail ci-dessus, puis reclique.", 'err');
+      setStatus('Envoi du lien de réinitialisation…', 'info');
+      const { error } = await sb.auth.resetPasswordForEmail(email, {
+        redirectTo: new URL('reinitialiser.html', window.location.href).href
+      });
+      if (error) setStatus('Erreur : ' + error.message, 'err');
+      else setStatus("Si un compte existe pour cette adresse, un lien vient d'être envoyé. Vérifie ta boîte mail (et les spams).", 'ok');
     });
 
     /* ---------- état connecté ---------- */

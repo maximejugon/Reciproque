@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Réciproque — Nouveau mot de passe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --ink:#0A1B19; --petrol-900:#0C2E2A; --petrol-700:#114F47; --petrol-500:#1A6B61;
+    --honey:#E6A24C; --paper:#F4EEE3; --card:#FFFFFF; --text-dark:#1B2421;
+    --muted-dark:#5E6B66; --line:#E4DCCE; --ok:#2E7D5B; --danger:#B23A3A;
+    --display:"Bricolage Grotesque",system-ui,sans-serif; --body:"Inter",system-ui,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:var(--body);background:var(--paper);color:var(--text-dark);-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+  .card{width:100%;max-width:400px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px}
+  .brand{display:flex;align-items:center;gap:9px;font-family:var(--display);font-weight:700;font-size:18px;margin-bottom:20px}
+  .brand .mark{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;background:var(--honey);color:var(--petrol-900);font-size:16px}
+  h1{font-family:var(--display);font-weight:700;font-size:21px;letter-spacing:-0.02em}
+  .sub{font-size:13.5px;color:var(--muted-dark);margin-top:6px;line-height:1.5}
+  label{display:block;font-size:12.5px;font-weight:600;color:var(--muted-dark);margin:16px 0 6px}
+  input{width:100%;border:1.5px solid var(--line);border-radius:11px;padding:12px;font-family:var(--body);font-size:14.5px;color:var(--text-dark)}
+  input:focus{outline:none;border-color:var(--petrol-700)}
+  .hint{font-size:11.5px;color:var(--muted-dark);line-height:1.4;margin-top:6px}
+  .btn{margin-top:18px;width:100%;border:none;background:var(--petrol-700);color:var(--paper);font-family:var(--body);font-weight:600;font-size:15px;padding:13px;border-radius:12px;cursor:pointer}
+  .btn:hover{background:var(--petrol-500)}.btn:disabled{opacity:.6;cursor:not-allowed}
+  .status{margin-top:14px;font-size:13.5px;padding:11px 13px;border-radius:11px;display:none}
+  .status.show{display:block}
+  .status.ok{background:rgba(46,125,91,.10);color:var(--ok)}
+  .status.err{background:rgba(178,58,58,.08);color:var(--danger)}
+  .status.info{background:rgba(26,107,97,.08);color:var(--petrol-700)}
+  a.home{display:inline-block;margin-top:18px;color:var(--petrol-700);font-weight:600;text-decoration:underline;font-size:14px}
+  .hidden{display:none}
+  :focus-visible{outline:2px solid var(--honey);outline-offset:2px;border-radius:6px}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand"><span class="mark">↺</span> Réciproque</div>
+
+    <div id="loading"><p class="sub">Vérification du lien…</p></div>
+
+    <div id="invalid" class="hidden">
+      <h1>Lien invalide ou expiré</h1>
+      <p class="sub">Ce lien de réinitialisation n'est plus valable. Redemande-en un depuis la page de connexion.</p>
+      <a class="home" href="index.html">Retour à la connexion</a>
+    </div>
+
+    <div id="form" class="hidden">
+      <h1>Nouveau mot de passe</h1>
+      <p class="sub">Choisis un nouveau mot de passe pour ton compte.</p>
+      <label for="pw">Nouveau mot de passe</label>
+      <input type="password" id="pw" autocomplete="new-password" />
+      <div class="hint">Au moins 6 caractères, avec une majuscule, une minuscule, un chiffre et un caractère spécial.</div>
+      <label for="pw2">Confirme le mot de passe</label>
+      <input type="password" id="pw2" autocomplete="new-password" />
+      <button class="btn" id="save">Enregistrer le nouveau mot de passe</button>
+      <div class="status" id="status"></div>
+    </div>
+
+    <div id="done" class="hidden">
+      <h1>Mot de passe modifié ✓</h1>
+      <p class="sub">Tu peux maintenant te connecter avec ton nouveau mot de passe.</p>
+      <a class="home" href="index.html">Aller à la connexion</a>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://zmxqeqwiuyzczisxudkt.supabase.co";
+    const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_mIzp02DstouuN1M1or8D6Q_wVMDI0au";
+    const REMEMBER_KEY = 'rep_remember';
+    const repStorage = {
+      _store(){ return localStorage.getItem(REMEMBER_KEY) === '0' ? sessionStorage : localStorage; },
+      getItem(k){ try { return this._store().getItem(k); } catch(e){ return null; } },
+      setItem(k,v){ try { this._store().setItem(k,v); } catch(e){} },
+      removeItem(k){ try { this._store().removeItem(k); } catch(e){} }
+    };
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: { storage: repStorage, persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
+
+    const el = id => document.getElementById(id);
+    function show(which){ ['loading','invalid','form','done'].forEach(s => el(s).classList.toggle('hidden', s !== which)); }
+    function setStatus(msg, kind){ const s = el('status'); s.textContent = msg; s.className = 'status show ' + kind; }
+    function manquesMotDePasse(pw){
+      const m = [];
+      if (pw.length < 6) m.push('6 caractères minimum');
+      if (!/[A-Z]/.test(pw)) m.push('une majuscule');
+      if (!/[a-z]/.test(pw)) m.push('une minuscule');
+      if (!/[0-9]/.test(pw)) m.push('un chiffre');
+      if (!/[^A-Za-z0-9]/.test(pw)) m.push('un caractère spécial');
+      return m;
+    }
+
+    let prete = false;
+    function ouvrirFormulaire(){ if(prete) return; prete = true; show('form'); }
+
+    sb.auth.onAuthStateChange((event, session) => {
+      if (session && session.user) ouvrirFormulaire();
+    });
+
+    (async () => {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session && session.user) { ouvrirFormulaire(); return; }
+      // laisser le temps au lien d'être traité, puis re-vérifier
+      setTimeout(async () => {
+        if (prete) return;
+        const { data: { session } } = await sb.auth.getSession();
+        if (session && session.user) ouvrirFormulaire();
+        else show('invalid');
+      }, 1500);
+    })();
+
+    el('save').addEventListener('click', async () => {
+      const pw = el('pw').value, pw2 = el('pw2').value;
+      const manques = manquesMotDePasse(pw);
+      if (manques.length) return setStatus('Mot de passe : il manque ' + manques.join(', ') + '.', 'err');
+      if (pw !== pw2) return setStatus('Les deux mots de passe ne correspondent pas.', 'err');
+
+      el('save').disabled = true;
+      setStatus('Enregistrement…', 'info');
+      const { error } = await sb.auth.updateUser({ password: pw });
+      el('save').disabled = false;
+      if (error) setStatus('Erreur : ' + error.message, 'err');
+      else show('done');
+    });
+  </script>
+</body>
+</html>

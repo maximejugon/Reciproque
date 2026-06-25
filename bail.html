@@ -62,6 +62,15 @@
   .act.primary:hover{background:var(--petrol-500)}
   .muted-line{font-size:12.5px;color:var(--muted-dark);margin-top:10px;font-style:italic}
   .empty{color:var(--muted-dark);font-size:14px;text-align:center;padding:18px}
+  .ac{position:relative}
+  .ac-results{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--card);border:1px solid var(--line);border-radius:11px;box-shadow:0 8px 24px rgba(10,27,25,.12);overflow:hidden;z-index:5;display:none}
+  .ac-results.show{display:block}
+  .ac-item{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;font-size:14px}
+  .ac-item:hover{background:var(--paper)}
+  .ac-av{width:28px;height:28px;border-radius:50%;flex:none;background:linear-gradient(135deg,var(--petrol-500),var(--honey));background-size:cover;background-position:center}
+  .ac-empty{padding:10px 12px;font-size:13px;color:var(--muted-dark)}
+  .ac-chosen{font-size:12.5px;color:var(--petrol-700);margin-top:6px;font-weight:600;display:none}
+  .ac-chosen.show{display:block}
 
   .notice{max-width:520px;margin:60px auto;text-align:center;color:var(--muted-dark);font-size:15px;line-height:1.6;padding:0 24px}
   .notice.hidden{display:none}.notice a{color:var(--petrol-700);font-weight:600}
@@ -95,8 +104,12 @@
         <button data-role="locataire">🔑 Le locataire</button>
       </div>
 
-      <label for="autre">L'autre personne</label>
-      <select id="autre"><option value="">— choisir —</option></select>
+      <label for="autre-search">L'autre personne</label>
+      <div class="ac">
+        <input type="text" id="autre-search" placeholder="Tape un nom…" autocomplete="off" />
+        <div class="ac-results" id="ac-results"></div>
+      </div>
+      <div class="ac-chosen" id="ac-chosen"></div>
 
       <div class="row">
         <div><label for="debut">Début</label><input type="date" id="debut" /></div>
@@ -143,19 +156,46 @@
       })
     );
 
-    async function chargerAutres(){
-      const { data } = await sb.from('profiles').select('id, nom').neq('id', userId);
-      const sel = el('autre');
-      (data || []).forEach(p => {
-        const o = document.createElement('option');
-        o.value = p.id; o.textContent = p.nom || '(profil sans nom)';
-        sel.appendChild(o);
-      });
+    /* ---------- recherche de l'autre personne par nom ---------- */
+    let selectedId = null;
+    const acInput = el('autre-search'), acResults = el('ac-results'), acChosen = el('ac-chosen');
+    let acTimer = null;
+
+    acInput.addEventListener('input', () => {
+      selectedId = null; acChosen.classList.remove('show');
+      const q = acInput.value.trim();
+      clearTimeout(acTimer);
+      if(q.length < 1){ acResults.classList.remove('show'); acResults.innerHTML = ''; return; }
+      acTimer = setTimeout(() => rechercherPersonnes(q), 250);
+    });
+
+    async function rechercherPersonnes(q){
+      const { data } = await sb.from('profiles')
+        .select('id, nom, avatar_url').neq('id', userId)
+        .ilike('nom', '%' + q + '%').limit(8);
+      if(!data || !data.length){
+        acResults.innerHTML = '<div class="ac-empty">Aucun profil à ce nom.</div>';
+        acResults.classList.add('show'); return;
+      }
+      acResults.innerHTML = data.map(p => `
+        <div class="ac-item" data-id="${p.id}" data-nom="${(p.nom||'').replace(/"/g,'&quot;')}">
+          <div class="ac-av"${p.avatar_url ? ` style="background-image:url('${p.avatar_url}')"` : ''}></div>
+          <span>${p.nom || '(sans nom)'}</span>
+        </div>`).join('');
+      acResults.classList.add('show');
+      acResults.querySelectorAll('.ac-item').forEach(it => it.addEventListener('click', () => {
+        selectedId = it.dataset.id;
+        acInput.value = it.dataset.nom;
+        acResults.classList.remove('show');
+        acChosen.textContent = '✓ ' + it.dataset.nom + ' sélectionné';
+        acChosen.classList.add('show');
+      }));
     }
+    document.addEventListener('click', (e) => { if(!e.target.closest('.ac')) acResults.classList.remove('show'); });
 
     el('declarer').addEventListener('click', async () => {
-      const autreId = el('autre').value;
-      if(!autreId) return setStatus('status-new', "Choisis l'autre personne.", 'err');
+      const autreId = selectedId;
+      if(!autreId) return setStatus('status-new', "Cherche et choisis l'autre personne.", 'err');
       const debut = el('debut').value || null;
       const fin = el('fin').value || null;
       const ligne = {
@@ -169,7 +209,8 @@
       el('declarer').disabled = false;
       if(error){ setStatus('status-new', 'Erreur : ' + error.message, 'err'); return; }
       setStatus('status-new', 'Location déclarée. En attente de confirmation par l\'autre personne.', 'ok');
-      el('autre').value = ''; el('debut').value = ''; el('fin').value = '';
+      acInput.value = ''; selectedId = null; acChosen.classList.remove('show');
+      el('debut').value = ''; el('fin').value = '';
       chargerListe();
     });
 
@@ -225,7 +266,6 @@
       if(!session){ showNotice("Connecte-toi pour gérer tes locations.<br><a href='index.html'>Se connecter</a>"); return; }
       userId = session.user.id;
       el('notice').classList.add('hidden'); el('wrap').classList.remove('hidden');
-      await chargerAutres();
       chargerListe();
     }
     init();
