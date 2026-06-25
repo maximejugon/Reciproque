@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Réciproque — Mes locations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --ink:#0A1B19; --petrol-900:#0C2E2A; --petrol-700:#114F47; --petrol-500:#1A6B61;
+    --honey:#E6A24C; --honey-soft:#F2C98A; --paper:#F4EEE3; --card:#FFFFFF;
+    --paper-dim:#ECE5D8; --text-dark:#1B2421; --muted-dark:#5E6B66;
+    --on-dark:#EDEAE2; --on-dark-dim:rgba(237,234,226,.62); --line:#E4DCCE;
+    --ok:#2E7D5B; --danger:#B23A3A;
+    --display:"Bricolage Grotesque",system-ui,sans-serif; --body:"Inter",system-ui,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:var(--body);background:var(--paper);color:var(--text-dark);-webkit-font-smoothing:antialiased}
+  .topbar{background:var(--petrol-900);color:var(--on-dark);padding:14px clamp(16px,4vw,40px);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20}
+  .brand{display:flex;align-items:center;gap:9px;font-family:var(--display);font-weight:700;font-size:17px;text-decoration:none;color:inherit}
+  .brand .mark{width:26px;height:26px;display:grid;place-items:center;border-radius:8px;background:var(--honey);color:var(--petrol-900);font-size:15px}
+  .mainnav{display:flex;gap:4px;align-items:center}
+  .mainnav a{color:var(--on-dark-dim);text-decoration:none;font-size:13.5px;font-weight:500;padding:7px 11px;border-radius:9px;transition:background .15s,color .15s}
+  .mainnav a:hover{color:var(--on-dark);background:rgba(237,234,226,.08)}
+  .mainnav a.active{color:var(--petrol-900);background:var(--honey);font-weight:600}
+
+  .wrap{max-width:620px;margin:0 auto;padding:clamp(20px,4vw,36px) clamp(16px,4vw,24px) 80px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;margin-bottom:20px}
+  h1{font-family:var(--display);font-weight:700;font-size:clamp(22px,3vw,28px);letter-spacing:-0.02em;margin-bottom:4px}
+  .lead{font-size:14px;color:var(--muted-dark);margin-bottom:22px;line-height:1.5}
+  h2{font-family:var(--display);font-weight:700;font-size:17px;margin-bottom:14px}
+
+  label{display:block;font-size:12.5px;font-weight:600;color:var(--muted-dark);margin:14px 0 6px}
+  input,select{width:100%;border:1.5px solid var(--line);border-radius:11px;padding:12px;font-family:var(--body);font-size:14.5px;color:var(--text-dark);background:var(--card)}
+  input:focus,select:focus{outline:none;border-color:var(--petrol-700)}
+  .row{display:flex;gap:10px}.row>div{flex:1}
+  .seg{display:flex;gap:8px;margin-top:6px}
+  .seg button{flex:1;border:1.5px solid var(--line);background:var(--card);border-radius:11px;padding:11px;cursor:pointer;font-family:var(--body);font-size:13.5px;font-weight:500;color:var(--text-dark)}
+  .seg button.active{border-color:var(--petrol-700);background:rgba(26,107,97,.08);font-weight:600;color:var(--petrol-700)}
+
+  .btn{margin-top:18px;width:100%;border:none;background:var(--petrol-700);color:var(--paper);font-family:var(--body);font-weight:600;font-size:15px;padding:13px;border-radius:12px;cursor:pointer}
+  .btn:hover{background:var(--petrol-500)}
+  .btn:disabled{opacity:.6;cursor:not-allowed}
+  .status{margin-top:12px;font-size:13.5px;padding:11px 13px;border-radius:11px;display:none}
+  .status.show{display:block}
+  .status.ok{background:rgba(46,125,91,.10);color:var(--ok)}.status.err{background:rgba(178,58,58,.08);color:var(--danger)}.status.info{background:rgba(26,107,97,.08);color:var(--petrol-700)}
+
+  .bail{border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
+  .bail-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .bail-who{font-family:var(--display);font-weight:600;font-size:15px}
+  .bail-sub{font-size:12.5px;color:var(--muted-dark);margin-top:3px}
+  .tag{font-size:11px;font-weight:600;padding:4px 9px;border-radius:999px;white-space:nowrap}
+  .tag.attente{background:rgba(230,162,76,.15);color:#9A6014}
+  .tag.ok{background:rgba(46,125,91,.12);color:var(--ok)}
+  .bail-actions{margin-top:13px;display:flex;gap:8px;flex-wrap:wrap}
+  .act{border:1px solid var(--line);background:var(--card);color:var(--petrol-700);cursor:pointer;font-family:var(--body);font-size:13px;font-weight:600;padding:9px 14px;border-radius:10px;text-decoration:none;display:inline-block}
+  .act:hover{border-color:var(--petrol-500)}
+  .act.primary{background:var(--petrol-700);color:var(--paper);border-color:var(--petrol-700)}
+  .act.primary:hover{background:var(--petrol-500)}
+  .muted-line{font-size:12.5px;color:var(--muted-dark);margin-top:10px;font-style:italic}
+  .empty{color:var(--muted-dark);font-size:14px;text-align:center;padding:18px}
+
+  .notice{max-width:520px;margin:60px auto;text-align:center;color:var(--muted-dark);font-size:15px;line-height:1.6;padding:0 24px}
+  .notice.hidden{display:none}.notice a{color:var(--petrol-700);font-weight:600}
+  .wrap.hidden{display:none}
+  :focus-visible{outline:2px solid var(--honey);outline-offset:2px;border-radius:6px}
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html"><span class="mark">↺</span> Réciproque</a>
+    <nav class="mainnav">
+      <a href="recherche.html">Rechercher</a>
+      <a href="bail.html" class="active">Mes locations</a>
+      <a href="mon-profil.html">Mon profil</a>
+    </nav>
+  </header>
+
+  <div class="notice" id="notice">Chargement…</div>
+
+  <main class="wrap hidden" id="wrap">
+    <h1>Mes locations</h1>
+    <p class="lead">Déclare une location passée ou en cours. L'autre personne devra la
+      confirmer — c'est cette confirmation mutuelle qui autorise ensuite les avis.</p>
+
+    <div class="panel">
+      <h2>Déclarer une location</h2>
+
+      <label>Dans cette location, j'étais :</label>
+      <div class="seg" id="role-seg">
+        <button data-role="proprietaire" class="active">🏠 Le propriétaire</button>
+        <button data-role="locataire">🔑 Le locataire</button>
+      </div>
+
+      <label for="autre">L'autre personne</label>
+      <select id="autre"><option value="">— choisir —</option></select>
+
+      <div class="row">
+        <div><label for="debut">Début</label><input type="date" id="debut" /></div>
+        <div><label for="fin">Fin</label><input type="date" id="fin" /></div>
+      </div>
+
+      <button class="btn" id="declarer">Déclarer la location</button>
+      <div class="status" id="status-new"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Historique</h2>
+      <div id="liste"><div class="empty">Chargement…</div></div>
+    </div>
+  </main>
+
+  <script>
+    const SUPABASE_URL = "https://zmxqeqwiuyzczisxudkt.supabase.co";
+    const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_mIzp02DstouuN1M1or8D6Q_wVMDI0au";
+    const REMEMBER_KEY = 'rep_remember';
+    const repStorage = {
+      _store(){ return localStorage.getItem(REMEMBER_KEY) === '0' ? sessionStorage : localStorage; },
+      getItem(k){ try { return this._store().getItem(k); } catch(e){ return null; } },
+      setItem(k,v){ try { this._store().setItem(k,v); } catch(e){} },
+      removeItem(k){ try { this._store().removeItem(k); } catch(e){} }
+    };
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: { storage: repStorage, persistSession: true, autoRefreshToken: true }
+    });
+
+    const el = id => document.getElementById(id);
+    let userId = null;
+    let monRole = 'proprietaire';
+    const moisAnnee = d => d ? new Date(d).toLocaleDateString('fr-FR', { month:'short', year:'numeric' }) : '?';
+
+    function showNotice(html){ el('notice').innerHTML = html; el('notice').classList.remove('hidden'); el('wrap').classList.add('hidden'); }
+    function setStatus(box, msg, kind){ const s = el(box); s.textContent = msg; s.className = 'status show ' + kind; }
+
+    // choix du rôle
+    document.querySelectorAll('#role-seg button').forEach(b =>
+      b.addEventListener('click', () => {
+        document.querySelectorAll('#role-seg button').forEach(x => x.classList.remove('active'));
+        b.classList.add('active'); monRole = b.dataset.role;
+      })
+    );
+
+    async function chargerAutres(){
+      const { data } = await sb.from('profiles').select('id, nom').neq('id', userId);
+      const sel = el('autre');
+      (data || []).forEach(p => {
+        const o = document.createElement('option');
+        o.value = p.id; o.textContent = p.nom || '(profil sans nom)';
+        sel.appendChild(o);
+      });
+    }
+
+    el('declarer').addEventListener('click', async () => {
+      const autreId = el('autre').value;
+      if(!autreId) return setStatus('status-new', "Choisis l'autre personne.", 'err');
+      const debut = el('debut').value || null;
+      const fin = el('fin').value || null;
+      const ligne = {
+        proprietaire_id: monRole === 'proprietaire' ? userId : autreId,
+        locataire_id:    monRole === 'locataire'   ? userId : autreId,
+        debut, fin, verifie: false, cree_par: userId,
+      };
+      el('declarer').disabled = true;
+      setStatus('status-new', 'Enregistrement…', 'info');
+      const { error } = await sb.from('baux').insert(ligne);
+      el('declarer').disabled = false;
+      if(error){ setStatus('status-new', 'Erreur : ' + error.message, 'err'); return; }
+      setStatus('status-new', 'Location déclarée. En attente de confirmation par l\'autre personne.', 'ok');
+      el('autre').value = ''; el('debut').value = ''; el('fin').value = '';
+      chargerListe();
+    });
+
+    async function confirmer(bailId){
+      const { error } = await sb.from('baux').update({ verifie: true }).eq('id', bailId);
+      if(error){ alert('Erreur : ' + error.message); return; }
+      chargerListe();
+    }
+
+    async function chargerListe(){
+      const { data, error } = await sb.from('baux')
+        .select('id, debut, fin, verifie, cree_par, proprietaire_id, locataire_id, proprietaire:proprietaire_id(nom), locataire:locataire_id(nom)')
+        .order('cree_le', { ascending:false });
+      const box = el('liste');
+      if(error){ box.innerHTML = '<div class="empty">Erreur : ' + error.message + '</div>'; return; }
+      if(!data || !data.length){ box.innerHTML = '<div class="empty">Aucune location déclarée pour le moment.</div>'; return; }
+
+      box.innerHTML = data.map(b => {
+        const jeSuisProprio = b.proprietaire_id === userId;
+        const autre = jeSuisProprio ? (b.locataire?.nom || 'Locataire') : (b.proprietaire?.nom || 'Propriétaire');
+        const monRoleTxt = jeSuisProprio ? 'Propriétaire' : 'Locataire';
+        const periode = (b.debut || b.fin) ? `${moisAnnee(b.debut)} → ${moisAnnee(b.fin)}` : 'Dates non précisées';
+        const tag = b.verifie
+          ? '<span class="tag ok">✓ Confirmée</span>'
+          : '<span class="tag attente">En attente</span>';
+
+        let actions = '';
+        if(b.verifie){
+          actions = `<a class="act primary" href="avis.html?bail=${b.id}">Laisser un avis</a>`;
+        } else if(b.cree_par !== userId){
+          actions = `<button class="act primary" onclick="confirmer('${b.id}')">Confirmer cette location</button>`;
+        } else {
+          actions = `<div class="muted-line">En attente de confirmation par ${autre}.</div>`;
+        }
+
+        return `
+          <div class="bail">
+            <div class="bail-top">
+              <div>
+                <div class="bail-who">Avec ${autre}</div>
+                <div class="bail-sub">Toi : ${monRoleTxt} · ${periode}</div>
+              </div>
+              ${tag}
+            </div>
+            <div class="bail-actions">${actions}</div>
+          </div>`;
+      }).join('');
+    }
+    window.confirmer = confirmer;
+
+    async function init(){
+      const { data: { session } } = await sb.auth.getSession();
+      if(!session){ showNotice("Connecte-toi pour gérer tes locations.<br><a href='index.html'>Se connecter</a>"); return; }
+      userId = session.user.id;
+      el('notice').classList.add('hidden'); el('wrap').classList.remove('hidden');
+      await chargerAutres();
+      chargerListe();
+    }
+    init();
+  </script>
+</body>
+</html>

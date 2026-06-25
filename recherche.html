@@ -77,6 +77,7 @@
     <a class="brand" href="index.html"><span class="mark">↺</span> Réciproque</a>
     <nav class="mainnav">
       <a href="recherche.html" class="active">Rechercher</a>
+      <a href="bail.html">Mes locations</a>
       <a href="mon-profil.html">Mon profil</a>
     </nav>
   </header>
@@ -116,7 +117,16 @@
   <script>
     const SUPABASE_URL = "https://zmxqeqwiuyzczisxudkt.supabase.co";
     const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_mIzp02DstouuN1M1or8D6Q_wVMDI0au";
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+    const REMEMBER_KEY = 'rep_remember';
+    const repStorage = {
+      _store(){ return localStorage.getItem(REMEMBER_KEY) === '0' ? sessionStorage : localStorage; },
+      getItem(k){ try { return this._store().getItem(k); } catch(e){ return null; } },
+      setItem(k,v){ try { this._store().setItem(k,v); } catch(e){} },
+      removeItem(k){ try { this._store().removeItem(k); } catch(e){} }
+    };
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: { storage: repStorage, persistSession: true, autoRefreshToken: true }
+    });
 
     const roleLabel = { proprietaire:"🏠 Propriétaire", locataire:"🔑 Locataire" };
     const seenLabel = { proprietaire:"vu par ses locataires", locataire:"vu par ses propriétaires" };
@@ -157,7 +167,7 @@
         return `
         <a class="pcard" href="profil.html?id=${p.id}">
           <div class="pcard-top">
-            <div class="pavatar"></div>
+            <div class="pavatar"${p.avatar ? ` style="background-image:url('${p.avatar}');background-size:cover;background-position:center"` : ''}></div>
             <div>
               <div class="pname">${p.nom || 'Profil sans nom'}</div>
               <div class="pmeta">📍 ${p.ville || '—'}</div>
@@ -186,7 +196,7 @@
       grid.innerHTML = '<div class="empty">Chargement…</div>';
 
       const [{ data: profils, error: e1 }, { data: notes }] = await Promise.all([
-        sb.from('profiles').select('id, nom, role, localisation'),
+        sb.from('profiles').select('id, nom, role, localisation, avatar_url'),
         sb.from('v_profil_notes').select('profil_id, note_moyenne, nombre_avis'),
       ]);
 
@@ -200,6 +210,7 @@
         nom: p.nom,
         role: p.role,
         ville: p.localisation,
+        avatar: p.avatar_url,
         note: notesMap[p.id] ? Number(notesMap[p.id].note_moyenne) : null,
         avis: notesMap[p.id] ? notesMap[p.id].nombre_avis : 0,
       }));

@@ -7,36 +7,28 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --ink:#0A1B19; --petrol-900:#0C2E2A; --petrol-700:#114F47; --petrol-500:#1A6B61;
     --honey:#E6A24C; --honey-soft:#F2C98A; --paper:#F4EEE3; --card:#FFFFFF;
     --paper-dim:#ECE5D8; --text-dark:#1B2421; --muted-dark:#5E6B66;
     --on-dark:#EDEAE2; --on-dark-dim:rgba(237,234,226,.62); --line:#E4DCCE;
-    --star-off:#D9D0C0;
+    --star-off:#D9D0C0; --ok:#2E7D5B; --danger:#B23A3A;
     --display:"Bricolage Grotesque",system-ui,sans-serif; --body:"Inter",system-ui,sans-serif;
   }
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:var(--body);background:var(--paper);color:var(--text-dark);-webkit-font-smoothing:antialiased}
-
   .topbar{background:var(--petrol-900);color:var(--on-dark);padding:14px clamp(16px,4vw,40px);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20}
   .brand{display:flex;align-items:center;gap:9px;font-family:var(--display);font-weight:700;font-size:17px;text-decoration:none;color:inherit}
   .brand .mark{width:26px;height:26px;display:grid;place-items:center;border-radius:8px;background:var(--honey);color:var(--petrol-900);font-size:15px}
   .mainnav{display:flex;gap:4px;align-items:center}
   .mainnav a{color:var(--on-dark-dim);text-decoration:none;font-size:13.5px;font-weight:500;padding:7px 11px;border-radius:9px;transition:background .15s,color .15s}
   .mainnav a:hover{color:var(--on-dark);background:rgba(237,234,226,.08)}
-  .mainnav a.active{color:var(--petrol-900);background:var(--honey);font-weight:600}
 
   .wrap{max-width:580px;margin:0 auto;padding:clamp(20px,4vw,36px) clamp(16px,4vw,24px) 80px}
   .panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px}
-
-  /* contexte du bail */
-  .ctx{margin-bottom:18px}
-  .ctx .preview-switch{display:flex;gap:6px;margin-bottom:16px}
-  .ctx .preview-switch span{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted-dark);align-self:center;margin-right:4px}
-  .ctx .preview-switch button{border:1px solid var(--line);background:var(--card);color:var(--muted-dark);cursor:pointer;font-family:var(--body);font-size:11.5px;font-weight:500;padding:6px 11px;border-radius:999px}
-  .ctx .preview-switch button.active{background:var(--petrol-700);color:var(--paper);border-color:var(--petrol-700);font-weight:600}
-  .ctx-card{display:flex;align-items:center;gap:13px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px}
+  .ctx-card{display:flex;align-items:center;gap:13px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:18px}
   .ctx-avatar{width:46px;height:46px;border-radius:50%;flex:none;background:linear-gradient(135deg,var(--petrol-500),var(--honey))}
   .ctx-eyebrow{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted-dark)}
   .ctx-name{font-family:var(--display);font-weight:700;font-size:17px;margin-top:1px}
@@ -44,46 +36,37 @@
 
   h2.form-h{font-family:var(--display);font-weight:700;font-size:18px;margin:24px 0 4px}
   .form-sub{font-size:13px;color:var(--muted-dark);margin-bottom:14px}
-
-  /* étoiles */
   .stars{display:inline-flex;gap:4px}
   .stars button{background:none;border:none;cursor:pointer;padding:2px;line-height:1;color:var(--star-off);font-size:30px;transition:color .1s,transform .08s}
   .stars.small button{font-size:21px}
   .stars button.on{color:var(--honey)}
   .stars button:hover{transform:scale(1.12)}
-
   .global-rate{display:flex;align-items:center;gap:14px}
   .global-rate .label{font-family:var(--display);font-weight:600;font-size:15px;min-width:64px;color:var(--muted-dark)}
-
-  /* critères */
   .crit-list{margin-top:8px;display:flex;flex-direction:column}
   .crit-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
   .crit-row:last-child{border-bottom:none}
   .crit-name{font-size:14px}
-
-  /* commentaire */
   textarea{width:100%;min-height:110px;resize:vertical;border:1.5px solid var(--line);border-radius:12px;padding:13px;font-family:var(--body);font-size:14px;color:var(--text-dark);background:var(--card);line-height:1.5}
   textarea:focus{outline:none;border-color:var(--petrol-700)}
   .counter{text-align:right;font-size:11.5px;color:var(--muted-dark);margin-top:5px}
-
   .rgpd{font-size:12px;color:var(--muted-dark);background:var(--paper);border:1px dashed var(--line);border-radius:11px;padding:12px 14px;line-height:1.5;margin-top:18px}
   .rgpd b{color:var(--petrol-700)}
-
-  .submit{margin-top:18px;width:100%;border:none;background:var(--petrol-700);color:var(--paper);font-family:var(--body);font-weight:600;font-size:15px;padding:14px;border-radius:12px;cursor:pointer;transition:background .15s}
+  .submit{margin-top:18px;width:100%;border:none;background:var(--petrol-700);color:var(--paper);font-family:var(--body);font-weight:600;font-size:15px;padding:14px;border-radius:12px;cursor:pointer}
   .submit:hover{background:var(--petrol-500)}
-  .err{color:#B23A3A;font-size:13px;margin-top:10px;display:none}
+  .submit:disabled{opacity:.6;cursor:not-allowed}
+  .err{color:var(--danger);font-size:13px;margin-top:10px;display:none}
   .err.show{display:block}
 
-  /* confirmation */
-  .done{display:none}
-  .done.show{display:block;text-align:center}
-  .done .check{width:56px;height:56px;border-radius:50%;background:rgba(46,125,91,.12);color:#2E7D5B;display:grid;place-items:center;font-size:28px;margin:0 auto 14px}
+  .done{display:none}.done.show{display:block;text-align:center}
+  .done .check{width:56px;height:56px;border-radius:50%;background:rgba(46,125,91,.12);color:var(--ok);display:grid;place-items:center;font-size:28px;margin:0 auto 14px}
   .done h2{font-family:var(--display);font-weight:700;font-size:20px}
   .done p{font-size:14px;color:var(--muted-dark);margin-top:8px;line-height:1.5}
-  .payload{margin-top:18px;text-align:left;background:var(--ink);color:#CFE8DF;border-radius:12px;padding:15px;font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.5;overflow-x:auto}
-  .payload .k{color:var(--honey-soft)}
-  .again{margin-top:16px;background:none;border:1px solid var(--line);color:var(--petrol-700);font-family:var(--body);font-size:13px;font-weight:500;padding:10px 16px;border-radius:10px;cursor:pointer}
+  .done a{display:inline-block;margin-top:18px;color:var(--petrol-700);font-weight:600;text-decoration:underline;font-size:14px}
 
+  .notice{max-width:520px;margin:60px auto;text-align:center;color:var(--muted-dark);font-size:15px;line-height:1.6;padding:0 24px}
+  .notice.hidden{display:none}.notice a{color:var(--petrol-700);font-weight:600}
+  .wrap.hidden{display:none}
   :focus-visible{outline:2px solid var(--honey);outline-offset:2px;border-radius:6px}
 </style>
 </head>
@@ -92,25 +75,21 @@
     <a class="brand" href="index.html"><span class="mark">↺</span> Réciproque</a>
     <nav class="mainnav">
       <a href="recherche.html">Rechercher</a>
+      <a href="bail.html">Mes locations</a>
       <a href="mon-profil.html">Mon profil</a>
     </nav>
   </header>
 
-  <main class="wrap">
+  <div class="notice" id="notice">Chargement…</div>
+
+  <main class="wrap hidden" id="wrap">
     <div class="panel" id="form-panel">
-      <div class="ctx">
-        <div class="preview-switch" role="group" aria-label="Aperçu : choisir le sens de l'avis">
-          <span>Aperçu</span>
-          <button id="sw-pl" class="active">Je suis propriétaire</button>
-          <button id="sw-lp">Je suis locataire</button>
-        </div>
-        <div class="ctx-card">
-          <div class="ctx-avatar"></div>
-          <div>
-            <div class="ctx-eyebrow" id="ctx-eyebrow">Vous évaluez votre locataire</div>
-            <div class="ctx-name" id="ctx-name">Léa Martin</div>
-            <div class="ctx-bail" id="ctx-bail">Bail · Appartement 2 ch., Gràcia · 2024–2026</div>
-          </div>
+      <div class="ctx-card">
+        <div class="ctx-avatar"></div>
+        <div>
+          <div class="ctx-eyebrow" id="ctx-eyebrow">Vous évaluez</div>
+          <div class="ctx-name" id="ctx-name">—</div>
+          <div class="ctx-bail" id="ctx-bail"></div>
         </div>
       </div>
 
@@ -127,155 +106,136 @@
 
       <h2 class="form-h">Votre commentaire</h2>
       <div class="form-sub">Restez factuel et courtois — la personne pourra répondre publiquement.</div>
-      <textarea id="comment" maxlength="600" placeholder="Décrivez votre expérience : ponctualité, communication, état des lieux…"></textarea>
+      <textarea id="comment" maxlength="600" placeholder="Décrivez votre expérience…"></textarea>
       <div class="counter"><span id="cc">0</span> / 600</div>
 
-      <div class="rgpd">
-        <b>Bon à savoir :</b> votre avis sera rattaché à ce bail vérifié et ne deviendra
-        visible qu'une fois l'avis de l'autre partie également déposé (ou après le délai prévu).
-        Vous restez responsable de vos propos.
-      </div>
+      <div class="rgpd"><b>Bon à savoir :</b> cet avis est rattaché à votre location confirmée.
+        La personne notée pourra y répondre publiquement.</div>
 
       <button class="submit" id="submit">Publier mon avis</button>
       <div class="err" id="err">Merci de donner au moins une note globale.</div>
     </div>
 
-    <!-- confirmation -->
     <div class="panel done" id="done">
       <div class="check">✓</div>
       <h2>Merci, votre avis est enregistré</h2>
-      <p>Il sera publié dès que l'avis de l'autre partie aura été déposé, ou après le délai prévu.
-         Vous pourrez le retrouver et le gérer depuis votre profil.</p>
-      <button class="again" id="again">Déposer un autre avis (aperçu)</button>
+      <p>Il apparaît désormais sur le profil de la personne.</p>
+      <a href="recherche.html">Retour à la recherche</a>
     </div>
   </main>
 
   <script>
-    /* Deux scénarios de démo, selon le sens de l'avis.
-       Les critères correspondent à ceux des pages de profil. */
-    const SCENARIOS = {
-      proprietaire_vers_locataire: {
-        eyebrow: "Vous évaluez votre locataire",
-        sujet: "Léa Martin",
-        sujetId: "11111111-1111-1111-1111-111111111111",
-        bail: "Bail · Appartement 2 ch., Gràcia · 2024–2026",
-        bailId: "bail-aaaa",
-        criteres: ["Paiement à temps","Entretien du logement","Communication","Respect du voisinage","Respect du contrat"],
-      },
-      locataire_vers_proprietaire: {
-        eyebrow: "Vous évaluez votre propriétaire",
-        sujet: "Marc Delmas",
-        sujetId: "22222222-2222-2222-2222-222222222222",
-        bail: "Bail · Appartement 2 ch., Gràcia · 2024–2026",
-        bailId: "bail-aaaa",
-        criteres: ["État du logement","Honnêteté de l'annonce","Réactivité","Respect du contrat","Rapport qualité / prix"],
-      },
+    const SUPABASE_URL = "https://zmxqeqwiuyzczisxudkt.supabase.co";
+    const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_mIzp02DstouuN1M1or8D6Q_wVMDI0au";
+    const REMEMBER_KEY = 'rep_remember';
+    const repStorage = {
+      _store(){ return localStorage.getItem(REMEMBER_KEY) === '0' ? sessionStorage : localStorage; },
+      getItem(k){ try { return this._store().getItem(k); } catch(e){ return null; } },
+      setItem(k,v){ try { this._store().setItem(k,v); } catch(e){} },
+      removeItem(k){ try { this._store().removeItem(k); } catch(e){} }
     };
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: { storage: repStorage, persistSession: true, autoRefreshToken: true }
+    });
+
+    const el = id => document.getElementById(id);
     const LABELS = ["—","Décevant","Moyen","Correct","Très bien","Excellent"];
+    const CRITERES = {
+      proprietaire_vers_locataire: ["Paiement à temps","Entretien du logement","Communication","Respect du voisinage","Respect du contrat"],
+      locataire_vers_proprietaire: ["État du logement","Honnêteté de l'annonce","Réactivité","Respect du contrat","Rapport qualité / prix"],
+    };
 
-    let direction = "proprietaire_vers_locataire";
-    let globalValue = 0;
-    let critValues = {};
+    let userId=null, bail=null, direction=null, sujetId=null;
+    let globalValue=0, critValues={};
 
-    /* construit un groupe d'étoiles cliquables */
-    function buildStars(container, onSet, small) {
-      container.innerHTML = "";
-      container.classList.toggle("small", !!small);
-      for (let i = 1; i <= 5; i++) {
-        const b = document.createElement("button");
-        b.type = "button";
-        b.textContent = "★";
-        b.setAttribute("aria-label", i + " étoile" + (i>1?"s":""));
-        b.addEventListener("click", () => onSet(i));
-        b.addEventListener("mouseenter", () => paint(container, i));
-        container.addEventListener("mouseleave", () => paint(container, parseInt(container.dataset.value)||0), { once:false });
+    function showNotice(html){ el('notice').innerHTML=html; el('notice').classList.remove('hidden'); el('wrap').classList.add('hidden'); }
+    function showForm(){ el('notice').classList.add('hidden'); el('wrap').classList.remove('hidden'); }
+
+    function buildStars(container, onSet, small){
+      container.innerHTML=""; container.classList.toggle("small", !!small);
+      for(let i=1;i<=5;i++){
+        const b=document.createElement("button"); b.type="button"; b.textContent="★";
+        b.setAttribute("aria-label", i+" étoile"+(i>1?"s":""));
+        b.addEventListener("click", ()=>onSet(i));
+        b.addEventListener("mouseenter", ()=>paint(container,i));
+        container.addEventListener("mouseleave", ()=>paint(container, parseInt(container.dataset.value)||0));
         container.appendChild(b);
       }
     }
-    function paint(container, n) {
-      [...container.children].forEach((b, idx) => b.classList.toggle("on", idx < n));
-    }
+    function paint(c,n){ [...c.children].forEach((b,i)=>b.classList.toggle("on", i<n)); }
 
-    function renderScenario() {
-      const s = SCENARIOS[direction];
-      document.getElementById("ctx-eyebrow").textContent = s.eyebrow;
-      document.getElementById("ctx-name").textContent = s.sujet;
-      document.getElementById("ctx-bail").textContent = s.bail;
-
-      // reset notes
-      globalValue = 0; critValues = {};
-      const g = document.getElementById("global-stars");
-      g.dataset.value = 0;
-      buildStars(g, v => { globalValue = v; g.dataset.value = v; paint(g, v); document.getElementById("global-label").textContent = LABELS[v]; });
-      paint(g, 0);
-      document.getElementById("global-label").textContent = "—";
-
-      // critères
-      const list = document.getElementById("crit-list");
-      list.innerHTML = "";
-      s.criteres.forEach(name => {
-        const row = document.createElement("div");
-        row.className = "crit-row";
-        const lab = document.createElement("div");
-        lab.className = "crit-name"; lab.textContent = name;
-        const st = document.createElement("div");
-        st.className = "stars small"; st.dataset.value = 0;
+    function renderForm(){
+      const crits = CRITERES[direction] || [];
+      const g=el('global-stars'); g.dataset.value=0;
+      buildStars(g, v=>{ globalValue=v; g.dataset.value=v; paint(g,v); el('global-label').textContent=LABELS[v]; });
+      paint(g,0);
+      const list=el('crit-list'); list.innerHTML="";
+      crits.forEach(name=>{
+        const row=document.createElement("div"); row.className="crit-row";
+        const lab=document.createElement("div"); lab.className="crit-name"; lab.textContent=name;
+        const st=document.createElement("div"); st.className="stars small"; st.dataset.value=0;
         row.appendChild(lab); row.appendChild(st); list.appendChild(row);
-        buildStars(st, v => { critValues[name] = v; st.dataset.value = v; paint(st, v); }, true);
-        paint(st, 0);
+        buildStars(st, v=>{ critValues[name]=v; st.dataset.value=v; paint(st,v); }, true);
+        paint(st,0);
       });
     }
 
-    // switch d'aperçu
-    document.getElementById("sw-pl").addEventListener("click", () => {
-      direction = "proprietaire_vers_locataire";
-      document.getElementById("sw-pl").classList.add("active");
-      document.getElementById("sw-lp").classList.remove("active");
-      renderScenario();
-    });
-    document.getElementById("sw-lp").addEventListener("click", () => {
-      direction = "locataire_vers_proprietaire";
-      document.getElementById("sw-lp").classList.add("active");
-      document.getElementById("sw-pl").classList.remove("active");
-      renderScenario();
-    });
+    el('comment').addEventListener('input', ()=> el('cc').textContent = el('comment').value.length);
 
-    // compteur de caractères
-    const ta = document.getElementById("comment");
-    ta.addEventListener("input", () => document.getElementById("cc").textContent = ta.value.length);
-
-    // soumission
-    document.getElementById("submit").addEventListener("click", () => {
-      const err = document.getElementById("err");
-      if (!globalValue) { err.classList.add("show"); return; }
-      err.classList.remove("show");
-
-      const s = SCENARIOS[direction];
-      // Objet prêt pour l'enregistrement en base — NON affiché à l'utilisateur.
-      // C'est ici que viendra l'appel Supabase : await sb.from('avis').insert(payload)
-      const payload = {
-        bail_id: s.bailId,
-        sujet_id: s.sujetId,
-        direction: direction,
-        note: globalValue,
-        criteres: critValues,
-        commentaire: ta.value.trim() || null,
+    el('submit').addEventListener('click', async ()=>{
+      if(!globalValue){ el('err').classList.add('show'); return; }
+      el('err').classList.remove('show');
+      el('submit').disabled = true;
+      const ligne = {
+        bail_id: bail.id, auteur_id: userId, sujet_id: sujetId, direction,
+        note: globalValue, criteres: critValues,
+        commentaire: el('comment').value.trim() || null,
       };
-      console.log("Avis à enregistrer :", payload);
-
-      document.getElementById("form-panel").style.display = "none";
-      document.getElementById("done").classList.add("show");
-      window.scrollTo({ top:0, behavior:"smooth" });
+      const { error } = await sb.from('avis').insert(ligne);
+      el('submit').disabled = false;
+      if(error){
+        if(/duplicate|unique/i.test(error.message)) el('err').textContent = "Tu as déjà laissé un avis pour cette location.";
+        else el('err').textContent = "Erreur : " + error.message;
+        el('err').classList.add('show'); return;
+      }
+      el('form-panel').style.display='none';
+      el('done').classList.add('show');
+      window.scrollTo({top:0, behavior:'smooth'});
     });
 
-    document.getElementById("again").addEventListener("click", () => {
-      document.getElementById("done").classList.remove("show");
-      document.getElementById("form-panel").style.display = "";
-      ta.value = ""; document.getElementById("cc").textContent = "0";
-      renderScenario();
-    });
+    async function init(){
+      const bailId = new URLSearchParams(location.search).get('bail');
+      if(!bailId){ showNotice("Pour laisser un avis, passe par <a href='bail.html'>Mes locations</a> et choisis une location confirmée."); return; }
 
-    renderScenario();
+      const { data:{ session } } = await sb.auth.getSession();
+      if(!session){ showNotice("Connecte-toi pour laisser un avis.<br><a href='index.html'>Se connecter</a>"); return; }
+      userId = session.user.id;
+
+      const { data: b } = await sb.from('baux')
+        .select('id, debut, fin, verifie, proprietaire_id, locataire_id, proprietaire:proprietaire_id(nom), locataire:locataire_id(nom)')
+        .eq('id', bailId).maybeSingle();
+      if(!b){ showNotice("Location introuvable, ou tu n'es pas concerné par celle-ci."); return; }
+      if(!b.verifie){ showNotice("Cette location doit d'abord être confirmée par les deux personnes avant de pouvoir laisser un avis.<br><a href='bail.html'>Mes locations</a>"); return; }
+      bail = b;
+
+      if(b.proprietaire_id === userId){
+        direction = 'proprietaire_vers_locataire'; sujetId = b.locataire_id;
+        el('ctx-eyebrow').textContent = "Vous évaluez votre locataire";
+        el('ctx-name').textContent = b.locataire?.nom || 'Votre locataire';
+      } else if(b.locataire_id === userId){
+        direction = 'locataire_vers_proprietaire'; sujetId = b.proprietaire_id;
+        el('ctx-eyebrow').textContent = "Vous évaluez votre propriétaire";
+        el('ctx-name').textContent = b.proprietaire?.nom || 'Votre propriétaire';
+      } else {
+        showNotice("Tu n'es pas concerné par cette location."); return;
+      }
+      const moisAnnee = d => d ? new Date(d).toLocaleDateString('fr-FR',{month:'short',year:'numeric'}) : '?';
+      el('ctx-bail').textContent = (b.debut||b.fin) ? `Location · ${moisAnnee(b.debut)} → ${moisAnnee(b.fin)}` : 'Location confirmée';
+
+      renderForm();
+      showForm();
+    }
+    init();
   </script>
 </body>
 </html>

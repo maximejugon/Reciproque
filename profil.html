@@ -87,6 +87,7 @@
     <a class="brand" href="index.html"><span class="mark">↺</span> Réciproque</a>
     <nav class="mainnav">
       <a href="recherche.html">Rechercher</a>
+      <a href="bail.html">Mes locations</a>
       <a href="mon-profil.html">Mon profil</a>
     </nav>
   </header>
@@ -105,7 +106,16 @@
   <script>
     const SUPABASE_URL = "https://zmxqeqwiuyzczisxudkt.supabase.co";
     const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_mIzp02DstouuN1M1or8D6Q_wVMDI0au";
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+    const REMEMBER_KEY = 'rep_remember';
+    const repStorage = {
+      _store(){ return localStorage.getItem(REMEMBER_KEY) === '0' ? sessionStorage : localStorage; },
+      getItem(k){ try { return this._store().getItem(k); } catch(e){ return null; } },
+      setItem(k,v){ try { this._store().setItem(k,v); } catch(e){} },
+      removeItem(k){ try { this._store().removeItem(k); } catch(e){} }
+    };
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: { storage: repStorage, persistSession: true, autoRefreshToken: true }
+    });
 
     const el = id => document.getElementById(id);
     const roleLabel = { proprietaire:"🏠 Propriétaire", locataire:"🔑 Locataire" };
@@ -133,7 +143,7 @@
       const verif = p.identite_verifiee ? '<div class="chips"><span class="chip">✓ Identité vérifiée</span></div>' : '';
       el('identity').innerHTML = `
         <div class="id-top">
-          <div class="id-avatar"></div>
+          <div class="id-avatar"${p.avatar_url ? ` style="background-image:url('${p.avatar_url}');background-size:cover;background-position:center"` : ''}></div>
           <div>
             <div class="id-name">${p.nom || 'Profil sans nom'}</div>
             ${p.role ? `<span class="id-badge">${roleLabel[p.role]}</span>` : ''}
@@ -206,7 +216,7 @@
       if(!session){ showNotice("Connecte-toi pour consulter ce profil.<br><a href='index.html'>Se connecter</a>"); return; }
 
       const { data: p, error: ep } = await sb.from('profiles')
-        .select('id, nom, role, localisation, bio, identite_verifiee, cree_le')
+        .select('id, nom, role, localisation, bio, identite_verifiee, cree_le, avatar_url')
         .eq('id', profilId).maybeSingle();
       if(ep){ showNotice('Erreur : ' + ep.message); return; }
       if(!p){ showNotice("Ce profil est introuvable. <a href='recherche.html'>Retour à la recherche</a>"); return; }

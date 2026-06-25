@@ -46,7 +46,8 @@
   .editor{display:none}
   .editor.show{display:block}
   .head{display:flex;align-items:center;gap:14px;margin-bottom:22px}
-  .avatar{width:60px;height:60px;border-radius:50%;flex:none;background:linear-gradient(135deg,var(--petrol-500),var(--honey))}
+  .avatar{width:60px;height:60px;border-radius:50%;flex:none;background:linear-gradient(135deg,var(--petrol-500),var(--honey));background-size:cover;background-position:center}
+  .change-photo{display:inline-block;margin-top:8px;font-size:12.5px;color:var(--petrol-700);cursor:pointer;font-weight:600;text-decoration:underline}
   .email{font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:-0.01em;word-break:break-all}
   .since{font-size:12.5px;color:var(--muted-dark);margin-top:2px}
 
@@ -74,6 +75,7 @@
     <a class="brand" href="index.html"><span class="mark">↺</span> Réciproque</a>
     <nav class="mainnav">
       <a href="recherche.html">Rechercher</a>
+      <a href="bail.html">Mes locations</a>
       <a href="mon-profil.html" class="active">Mon profil</a>
     </nav>
   </header>
@@ -95,10 +97,11 @@
       <!-- éditeur -->
       <div class="editor" id="editor">
         <div class="head">
-          <div class="avatar"></div>
+          <div class="avatar" id="avatar"></div>
           <div>
             <div class="email" id="email">—</div>
             <div class="since" id="since"></div>
+            <label class="change-photo">Changer la photo<input type="file" id="avatar-input" accept="image/*" hidden /></label>
           </div>
         </div>
 
@@ -129,7 +132,16 @@
   <script>
     const SUPABASE_URL = "https://zmxqeqwiuyzczisxudkt.supabase.co";
     const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_mIzp02DstouuN1M1or8D6Q_wVMDI0au";
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+    const REMEMBER_KEY = 'rep_remember';
+    const repStorage = {
+      _store(){ return localStorage.getItem(REMEMBER_KEY) === '0' ? sessionStorage : localStorage; },
+      getItem(k){ try { return this._store().getItem(k); } catch(e){ return null; } },
+      setItem(k,v){ try { this._store().setItem(k,v); } catch(e){} },
+      removeItem(k){ try { this._store().removeItem(k); } catch(e){} }
+    };
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: { storage: repStorage, persistSession: true, autoRefreshToken: true }
+    });
 
     const el = id => document.getElementById(id);
     let userId = null;
@@ -156,7 +168,7 @@
       // lecture du profil réel
       const { data, error } = await sb
         .from('profiles')
-        .select('nom, role, localisation, bio, cree_le')
+        .select('nom, role, localisation, bio, cree_le, avatar_url')
         .eq('id', userId)
         .single();
 
@@ -168,6 +180,7 @@
         el('role').value  = data.role || '';
         el('ville').value = data.localisation || '';
         el('bio').value   = data.bio || '';
+        setAvatar(data.avatar_url);
         if (data.cree_le) {
           const d = new Date(data.cree_le);
           el('since').textContent = 'Membre depuis ' + d.toLocaleDateString('fr-FR', { month:'long', year:'numeric' });
@@ -177,6 +190,23 @@
         show('editor');
       }
     }
+
+    /* ---------- photo de profil ---------- */
+    function setAvatar(url){ if(url) el('avatar').style.backgroundImage = `url("${url}")`; }
+    el('avatar-input').addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if(!file) return;
+      setStatus('Envoi de la photo…', 'ok');
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+      const path = `${userId}/${Date.now()}.${ext}`;
+      const { error: upErr } = await sb.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type });
+      if(upErr){ setStatus('Erreur photo : ' + upErr.message, 'err'); return; }
+      const { data: { publicUrl } } = sb.storage.from('avatars').getPublicUrl(path);
+      const { error: dbErr } = await sb.from('profiles').update({ avatar_url: publicUrl }).eq('id', userId);
+      if(dbErr){ setStatus('Erreur : ' + dbErr.message, 'err'); return; }
+      setAvatar(publicUrl);
+      setStatus('Photo mise à jour ✓', 'ok');
+    });
 
     // enregistrement
     el('save').addEventListener('click', async () => {
