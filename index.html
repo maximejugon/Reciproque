@@ -507,13 +507,24 @@
       showSignedOut(); clearStatus();
     });
 
+    /* Après une connexion (notamment Google), si le profil n'a pas encore de
+       rôle, on lui applique celui choisi avant la redirection. */
+    async function ensureProfileRole(user) {
+      const role = localStorage.getItem('rep_role');
+      if (!role) return;
+      const { data } = await sb.from('profiles').select('role').eq('id', user.id).maybeSingle();
+      if (data && !data.role) {
+        await sb.from('profiles').update({ role }).eq('id', user.id);
+      }
+    }
+
     /* ---------- au chargement : détecte une session existante ---------- */
     (async () => {
       if (!isConfigured) { notConfigured(); return; }
       const { data: { session } } = await sb.auth.getSession();
-      if (session && session.user) showSignedIn(session.user);
+      if (session && session.user) { showSignedIn(session.user); ensureProfileRole(session.user); }
       sb.auth.onAuthStateChange((_event, session) => {
-        if (session && session.user) showSignedIn(session.user);
+        if (session && session.user) { showSignedIn(session.user); ensureProfileRole(session.user); }
         else showSignedOut();
       });
     })();
