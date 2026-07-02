@@ -27,6 +27,7 @@
   .mainnav a{color:var(--on-dark-dim);text-decoration:none;font-size:13.5px;font-weight:500;padding:7px 11px;border-radius:9px;transition:background .15s,color .15s}
   .mainnav a:hover{color:var(--on-dark);background:rgba(237,234,226,.08)}
   .mainnav a.active{color:var(--petrol-900);background:var(--honey);font-weight:600}
+  .tb-right{display:flex;align-items:center;gap:6px}
 
   .wrap{max-width:520px;margin:0 auto;padding:clamp(20px,4vw,40px) clamp(16px,4vw,24px) 80px}
   .panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px}
@@ -81,11 +82,14 @@
 <body>
   <header class="topbar">
     <a class="brand" href="index.html"><span class="mark">↺</span> Réciproque</a>
-    <nav class="mainnav">
-      <a href="recherche.html">Rechercher</a>
-      <a href="bail.html">Mes locations</a>
-      <a href="mon-profil.html" class="active">Mon profil</a>
-    </nav>
+    <div class="tb-right">
+      <nav class="mainnav">
+        <a href="recherche.html">Rechercher</a>
+        <a href="bail.html">Mes locations</a>
+        <a href="mon-profil.html" class="active">Mon profil</a>
+      </nav>
+      <div id="notif-wrap"></div>
+    </div>
   </header>
 
   <main class="wrap">
@@ -283,5 +287,6 @@
 
     init();
   </script>
+  <script src="notifications.js"></script>
 </body>
 </html>
