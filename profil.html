@@ -81,6 +81,15 @@
   .rv-report-menu button:hover{background:var(--paper)}
   .rv-report-done{display:none;font-size:11.5px;color:var(--muted-dark);margin-top:4px}
   .rv-report-done.show{display:block}
+  .rv-reply-zone{margin-top:12px}
+  .rv-reply-btn{background:none;border:1px solid var(--line);color:var(--petrol-700);cursor:pointer;font-family:var(--body);font-size:12.5px;font-weight:500;padding:7px 13px;border-radius:9px}
+  .rv-reply-btn:hover{border-color:var(--petrol-500);background:var(--paper)}
+  .rv-reply-form{display:none;margin-top:10px;flex-direction:column;gap:8px}
+  .rv-reply-form.show{display:flex}
+  .rv-reply-form textarea{width:100%;min-height:70px;resize:vertical;border:1.5px solid var(--line);border-radius:10px;padding:10px;font-family:var(--body);font-size:13.5px;color:var(--text-dark);line-height:1.5}
+  .rv-reply-form textarea:focus{outline:none;border-color:var(--petrol-700)}
+  .rv-reply-send{align-self:flex-start;border:none;background:var(--petrol-700);color:var(--paper);font-family:var(--body);font-size:13px;font-weight:600;padding:9px 16px;border-radius:9px;cursor:pointer}
+  .rv-reply-send:hover{background:var(--petrol-500)}
   .empty-reviews{background:var(--card);border:1px dashed var(--line);border-radius:14px;padding:22px;text-align:center;color:var(--muted-dark);font-size:14px}
 
   .notice{max-width:520px;margin:60px auto;padding:0 24px;text-align:center;color:var(--muted-dark);font-size:15px;line-height:1.6}
@@ -127,6 +136,7 @@
     });
 
     const el = id => document.getElementById(id);
+    let viewerId = null, profilAffiche = null;
     const roleLabel = { proprietaire:"🏠 Propriétaire", locataire:"🔑 Locataire" };
     const seenLabel = { proprietaire:"Vu par ses locataires", locataire:"Vu par ses propriétaires" };
     const fmt = n => Number(n).toFixed(1).replace('.', ',');
@@ -211,7 +221,17 @@
             <div class="rv-stars">${stars(a.note)}</div>
           </div>
           ${a.commentaire ? `<p class="rv-text">${a.commentaire}</p>` : ''}
-          ${a.reponse ? `<div class="rv-response"><div class="r-label">Réponse</div><div class="r-text">${a.reponse}</div></div>` : ''}
+          ${a.reponse
+            ? `<div class="rv-response"><div class="r-label">Réponse</div><div class="r-text">${a.reponse}</div></div>`
+            : (viewerId === profilAffiche
+                ? `<div class="rv-reply-zone" data-avis="${a.id}">
+                     <button class="rv-reply-btn" onclick="toggleReplyForm('${a.id}')">Répondre à cet avis</button>
+                     <div class="rv-reply-form" id="rf-${a.id}">
+                       <textarea id="rt-${a.id}" maxlength="500" placeholder="Votre réponse, visible publiquement…"></textarea>
+                       <button class="rv-reply-send" onclick="envoyerReponse('${a.id}')">Publier la réponse</button>
+                     </div>
+                   </div>`
+                : '')}
           <div class="rv-report" data-avis="${a.id}">
             <button class="rv-report-btn" onclick="toggleReportMenu('${a.id}')">Signaler cet avis</button>
             <div class="rv-report-menu" id="rm-${a.id}">
@@ -226,6 +246,19 @@
       }).join('');
       el('main').innerHTML = h + `<div class="reviews">${cards}</div>`;
     }
+
+    function toggleReplyForm(avisId){
+      document.getElementById('rf-' + avisId).classList.toggle('show');
+    }
+    async function envoyerReponse(avisId){
+      const texte = document.getElementById('rt-' + avisId).value.trim();
+      if(!texte) return;
+      const { error } = await sb.rpc('repondre_a_avis', { p_avis_id: avisId, p_reponse: texte });
+      if(error){ alert('Erreur : ' + error.message); return; }
+      init();
+    }
+    window.toggleReplyForm = toggleReplyForm;
+    window.envoyerReponse = envoyerReponse;
 
     async function signalerAvis(avisId, motif){
       document.getElementById('rm-' + avisId).classList.remove('show');
@@ -247,6 +280,8 @@
 
       const { data: { session } } = await sb.auth.getSession();
       if(!session){ showNotice("Connecte-toi pour consulter ce profil.<br><a href='index.html'>Se connecter</a>"); return; }
+      viewerId = session.user.id;
+      profilAffiche = profilId;
 
       const { data: p, error: ep } = await sb.from('profiles')
         .select('id, nom, role, localisation, bio, identite_verifiee, cree_le, avatar_url')
