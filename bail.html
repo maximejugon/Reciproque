@@ -121,7 +121,7 @@
 
       <div class="row">
         <div><label for="debut">Début</label><input type="date" id="debut" /></div>
-        <div><label for="fin">Fin</label><input type="date" id="fin" /></div>
+        <div><label for="fin">Fin (optionnel, si terminée)</label><input type="date" id="fin" /></div>
       </div>
 
       <button class="btn" id="declarer">Déclarer la location</button>
@@ -206,6 +206,11 @@
       if(!autreId) return setStatus('status-new', "Cherche et choisis l'autre personne.", 'err');
       const debut = el('debut').value || null;
       const fin = el('fin').value || null;
+      const aujourdhui = new Date().toISOString().slice(0,10);
+      if(debut && debut > aujourdhui)
+        return setStatus('status-new', "La date de début ne peut pas être dans le futur : une location déclarée doit avoir déjà commencé.", 'err');
+      if(fin && debut && fin < debut)
+        return setStatus('status-new', "La date de fin ne peut pas être avant la date de début.", 'err');
       const ligne = {
         proprietaire_id: monRole === 'proprietaire' ? userId : autreId,
         locataire_id:    monRole === 'locataire'   ? userId : autreId,
@@ -215,7 +220,12 @@
       setStatus('status-new', 'Enregistrement…', 'info');
       const { error } = await sb.from('baux').insert(ligne);
       el('declarer').disabled = false;
-      if(error){ setStatus('status-new', 'Erreur : ' + error.message, 'err'); return; }
+      if(error){
+        const msg = /baux_debut_pas_futur/.test(error.message) ? "La date de début ne peut pas être dans le futur."
+                  : /baux_fin_apres_debut/.test(error.message) ? "La date de fin ne peut pas être avant la date de début."
+                  : 'Erreur : ' + error.message;
+        setStatus('status-new', msg, 'err'); return;
+      }
       setStatus('status-new', 'Location déclarée. En attente de confirmation par l\'autre personne.', 'ok');
       acInput.value = ''; selectedId = null; acChosen.classList.remove('show');
       el('debut').value = ''; el('fin').value = '';
@@ -234,8 +244,16 @@
     async function enregistrerDates(bailId){
       const debut = document.getElementById('ed-debut-' + bailId).value || null;
       const fin = document.getElementById('ed-fin-' + bailId).value || null;
+      const aujourdhui = new Date().toISOString().slice(0,10);
+      if(debut && debut > aujourdhui){ alert("La date de début ne peut pas être dans le futur."); return; }
+      if(fin && debut && fin < debut){ alert("La date de fin ne peut pas être avant la date de début."); return; }
       const { error } = await sb.from('baux').update({ debut, fin }).eq('id', bailId);
-      if(error){ alert('Erreur : ' + error.message); return; }
+      if(error){
+        const msg = /baux_debut_pas_futur/.test(error.message) ? "La date de début ne peut pas être dans le futur."
+                  : /baux_fin_apres_debut/.test(error.message) ? "La date de fin ne peut pas être avant la date de début."
+                  : 'Erreur : ' + error.message;
+        alert(msg); return;
+      }
       chargerListe();
     }
     async function annuler(bailId){
@@ -302,6 +320,7 @@
     window.confirmer = confirmer;
 
     async function init(){
+      el('debut').max = new Date().toISOString().slice(0,10);
       const { data: { session } } = await sb.auth.getSession();
       if(!session){ showNotice("Connecte-toi pour gérer tes locations.<br><a href='index.html'>Se connecter</a>"); return; }
       userId = session.user.id;
