@@ -72,6 +72,15 @@
   .rv-response{margin-top:13px;padding:13px 14px;background:var(--paper);border-radius:11px;border-left:3px solid var(--honey)}
   .rv-response .r-label{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted-dark);font-weight:600}
   .rv-response .r-text{font-size:13.5px;line-height:1.5;margin-top:5px;color:#2A332F}
+  .rv-report{margin-top:12px;position:relative}
+  .rv-report-btn{background:none;border:none;color:var(--muted-dark);font-size:11.5px;cursor:pointer;text-decoration:underline;padding:0}
+  .rv-report-btn:hover{color:var(--danger, #B23A3A)}
+  .rv-report-menu{display:none;position:absolute;left:0;top:calc(100% + 6px);background:var(--card);border:1px solid var(--line);border-radius:11px;box-shadow:0 8px 24px rgba(10,27,25,.12);overflow:hidden;z-index:5;min-width:230px}
+  .rv-report-menu.show{display:block}
+  .rv-report-menu button{display:block;width:100%;text-align:left;background:none;border:none;padding:10px 13px;font-size:13px;font-family:var(--body);color:var(--text-dark);cursor:pointer}
+  .rv-report-menu button:hover{background:var(--paper)}
+  .rv-report-done{display:none;font-size:11.5px;color:var(--muted-dark);margin-top:4px}
+  .rv-report-done.show{display:block}
   .empty-reviews{background:var(--card);border:1px dashed var(--line);border-radius:14px;padding:22px;text-align:center;color:var(--muted-dark);font-size:14px}
 
   .notice{max-width:520px;margin:60px auto;padding:0 24px;text-align:center;color:var(--muted-dark);font-size:15px;line-height:1.6}
@@ -203,10 +212,34 @@
           </div>
           ${a.commentaire ? `<p class="rv-text">${a.commentaire}</p>` : ''}
           ${a.reponse ? `<div class="rv-response"><div class="r-label">Réponse</div><div class="r-text">${a.reponse}</div></div>` : ''}
+          <div class="rv-report" data-avis="${a.id}">
+            <button class="rv-report-btn" onclick="toggleReportMenu('${a.id}')">Signaler cet avis</button>
+            <div class="rv-report-menu" id="rm-${a.id}">
+              <button onclick="signalerAvis('${a.id}','Faux avis / n\\'a jamais eu lieu')">Faux avis / n'a jamais eu lieu</button>
+              <button onclick="signalerAvis('${a.id}','Propos injurieux ou diffamatoires')">Propos injurieux ou diffamatoires</button>
+              <button onclick="signalerAvis('${a.id}','Données personnelles / hors sujet')">Données personnelles / hors sujet</button>
+              <button onclick="signalerAvis('${a.id}','Autre raison')">Autre raison</button>
+            </div>
+            <div class="rv-report-done" id="rd-${a.id}">✓ Signalé, merci — on va vérifier.</div>
+          </div>
         </article>`;
       }).join('');
       el('main').innerHTML = h + `<div class="reviews">${cards}</div>`;
     }
+
+    async function signalerAvis(avisId, motif){
+      document.getElementById('rm-' + avisId).classList.remove('show');
+      const { error } = await sb.rpc('signaler_avis', { p_avis_id: avisId, p_motif: motif });
+      if(error){ alert('Erreur : ' + error.message); return; }
+      document.getElementById('rd-' + avisId).classList.add('show');
+    }
+    function toggleReportMenu(avisId){
+      const m = document.getElementById('rm-' + avisId);
+      document.querySelectorAll('.rv-report-menu.show').forEach(x => { if(x!==m) x.classList.remove('show'); });
+      m.classList.toggle('show');
+    }
+    window.signalerAvis = signalerAvis;
+    window.toggleReportMenu = toggleReportMenu;
 
     async function init(){
       const profilId = new URLSearchParams(location.search).get('id');
