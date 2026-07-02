@@ -60,6 +60,14 @@
   .act:hover{border-color:var(--petrol-500)}
   .act.primary{background:var(--petrol-700);color:var(--paper);border-color:var(--petrol-700)}
   .act.primary:hover{background:var(--petrol-500)}
+  .act.danger{color:var(--danger);border-color:rgba(178,58,58,.35)}
+  .act.danger:hover{background:rgba(178,58,58,.06);border-color:var(--danger)}
+  .edit-dates{display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+  .edit-dates.show{display:block}
+  .edit-dates .row{display:flex;gap:10px;margin-bottom:10px}
+  .edit-dates .row>div{flex:1}
+  .edit-dates label{display:block;font-size:11.5px;font-weight:600;color:var(--muted-dark);margin-bottom:5px}
+  .edit-dates input{width:100%;border:1.5px solid var(--line);border-radius:9px;padding:9px;font-family:var(--body);font-size:13.5px}
   .muted-line{font-size:12.5px;color:var(--muted-dark);margin-top:10px;font-style:italic}
   .empty{color:var(--muted-dark);font-size:14px;text-align:center;padding:18px}
   .ac{position:relative}
@@ -220,6 +228,27 @@
       chargerListe();
     }
 
+    function toggleEdit(bailId){
+      document.getElementById('ed-' + bailId).classList.toggle('show');
+    }
+    async function enregistrerDates(bailId){
+      const debut = document.getElementById('ed-debut-' + bailId).value || null;
+      const fin = document.getElementById('ed-fin-' + bailId).value || null;
+      const { error } = await sb.from('baux').update({ debut, fin }).eq('id', bailId);
+      if(error){ alert('Erreur : ' + error.message); return; }
+      chargerListe();
+    }
+    async function annuler(bailId){
+      const ok = confirm('Annuler cette location déclarée ? Cette action est irréversible.');
+      if(!ok) return;
+      const { error } = await sb.from('baux').delete().eq('id', bailId);
+      if(error){ alert('Erreur : ' + error.message); return; }
+      chargerListe();
+    }
+    window.toggleEdit = toggleEdit;
+    window.enregistrerDates = enregistrerDates;
+    window.annuler = annuler;
+
     async function chargerListe(){
       const { data, error } = await sb.from('baux')
         .select('id, debut, fin, verifie, cree_par, proprietaire_id, locataire_id, proprietaire:proprietaire_id(nom), locataire:locataire_id(nom)')
@@ -245,6 +274,10 @@
         } else {
           actions = `<div class="muted-line">En attente de confirmation par ${autre}.</div>`;
         }
+        actions += `<button class="act" onclick="toggleEdit('${b.id}')">Modifier les dates</button>`;
+        if(!b.verifie && b.cree_par === userId){
+          actions += `<button class="act danger" onclick="annuler('${b.id}')">Annuler</button>`;
+        }
 
         return `
           <div class="bail">
@@ -256,6 +289,13 @@
               ${tag}
             </div>
             <div class="bail-actions">${actions}</div>
+            <div class="edit-dates" id="ed-${b.id}">
+              <div class="row">
+                <div><label>Début</label><input type="date" id="ed-debut-${b.id}" value="${b.debut || ''}" /></div>
+                <div><label>Fin</label><input type="date" id="ed-fin-${b.id}" value="${b.fin || ''}" /></div>
+              </div>
+              <button class="act primary" onclick="enregistrerDates('${b.id}')">Enregistrer</button>
+            </div>
           </div>`;
       }).join('');
     }
